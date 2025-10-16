@@ -306,7 +306,7 @@ ${statusPrompt}
 请用中文回复，语言要生动有趣。`;
 
     const message = await anthropic.messages.create({
-      model: 'deepseek-chat',
+      model: 'claude-sonnet-4-20250514',
       max_tokens: 10000,
       system: systemPrompt,
       messages: [
@@ -400,7 +400,7 @@ ${statusPrompt}
     });
 
     const message = await anthropic.messages.create({
-      model: 'deepseek-chat',
+      model: 'claude-sonnet-4-20250514',
       max_tokens: 10000,
       system: systemPrompt,
       messages: messages

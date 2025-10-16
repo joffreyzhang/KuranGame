@@ -1,0 +1,7 @@
+node_modules/
+uploads/
+game_saves/
+.env
+*.log
+.DS_Store
+

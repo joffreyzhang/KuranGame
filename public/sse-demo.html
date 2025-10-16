@@ -1,0 +1,497 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SSE Game Demo - Real-time Streaming</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2em;
+            margin-bottom: 10px;
+        }
+
+        .connection-status {
+            display: inline-block;
+            padding: 5px 15px;
+            border-radius: 20px;
+            background: rgba(255, 255, 255, 0.2);
+            font-size: 0.9em;
+            margin-top: 10px;
+        }
+
+        .connection-status.connected {
+            background: rgba(40, 167, 69, 0.8);
+        }
+
+        .connection-status.disconnected {
+            background: rgba(220, 53, 69, 0.8);
+        }
+
+        .content {
+            display: grid;
+            grid-template-columns: 1fr 300px;
+            gap: 20px;
+            padding: 30px;
+        }
+
+        .chat-area {
+            background: #f8f9fa;
+            border-radius: 15px;
+            padding: 20px;
+            height: 500px;
+            overflow-y: auto;
+        }
+
+        .message {
+            margin-bottom: 15px;
+            animation: fadeIn 0.3s ease-in;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .message.player {
+            text-align: right;
+        }
+
+        .message.player .bubble {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            display: inline-block;
+            padding: 12px 20px;
+            border-radius: 20px 20px 5px 20px;
+            max-width: 70%;
+        }
+
+        .message.game .bubble {
+            background: white;
+            color: #333;
+            display: inline-block;
+            padding: 15px 20px;
+            border-radius: 20px 20px 20px 5px;
+            max-width: 85%;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            border-left: 4px solid #667eea;
+        }
+
+        .message.system {
+            text-align: center;
+            color: #666;
+            font-style: italic;
+            font-size: 0.9em;
+        }
+
+        .streaming-indicator {
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            background: #667eea;
+            border-radius: 50%;
+            animation: pulse 1s infinite;
+            margin-left: 5px;
+        }
+
+        @keyframes pulse {
+            0%, 100% {
+                opacity: 1;
+            }
+            50% {
+                opacity: 0.3;
+            }
+        }
+
+        .sidebar {
+            background: #f8f9fa;
+            border-radius: 15px;
+            padding: 20px;
+        }
+
+        .sidebar h3 {
+            color: #667eea;
+            margin-bottom: 15px;
+            border-bottom: 2px solid #667eea;
+            padding-bottom: 5px;
+        }
+
+        .event-log {
+            background: white;
+            border-radius: 10px;
+            padding: 15px;
+            max-height: 400px;
+            overflow-y: auto;
+            font-family: 'Courier New', monospace;
+            font-size: 0.85em;
+        }
+
+        .event-entry {
+            padding: 5px 0;
+            border-bottom: 1px solid #e0e0e0;
+        }
+
+        .event-entry:last-child {
+            border-bottom: none;
+        }
+
+        .event-type {
+            font-weight: 600;
+            color: #667eea;
+        }
+
+        .input-area {
+            padding: 30px;
+            background: white;
+            border-top: 1px solid #e0e0e0;
+            display: flex;
+            gap: 10px;
+        }
+
+        .input-field {
+            flex: 1;
+            padding: 12px 20px;
+            border: 2px solid #e0e0e0;
+            border-radius: 25px;
+            font-size: 1em;
+            outline: none;
+            transition: border-color 0.3s;
+        }
+
+        .input-field:focus {
+            border-color: #667eea;
+        }
+
+        .btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            border-radius: 25px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: transform 0.2s;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+        }
+
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .setup-area {
+            padding: 30px;
+            background: white;
+            text-align: center;
+        }
+
+        .setup-input {
+            margin: 10px;
+            padding: 10px 20px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            font-size: 1em;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🎮 SSE Game Demo - Real-time Streaming</h1>
+            <div class="connection-status disconnected" id="connectionStatus">
+                ⚫ Disconnected
+            </div>
+        </div>
+
+        <div id="setupArea" class="setup-area">
+            <h2>Setup Game Session</h2>
+            <p style="margin: 20px 0; color: #666;">Enter your session ID to connect to the SSE stream</p>
+            <input type="text" id="sessionIdInput" class="setup-input" placeholder="Session ID" style="width: 300px;">
+            <br>
+            <button class="btn" onclick="connectToGame()">Connect to Game</button>
+        </div>
+
+        <div id="gameArea" style="display: none;">
+            <div class="content">
+                <div class="chat-area" id="chatArea">
+                    <div class="message system">
+                        <div class="bubble">SSE connection established. Send your first action!</div>
+                    </div>
+                </div>
+
+                <div class="sidebar">
+                    <h3>📊 Event Log</h3>
+                    <div class="event-log" id="eventLog">
+                        <div class="event-entry">Waiting for events...</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="input-area">
+                <input
+                    type="text"
+                    class="input-field"
+                    id="actionInput"
+                    placeholder="Enter your action here..."
+                    onkeypress="handleKeyPress(event)"
+                />
+                <button class="btn" id="sendBtn" onclick="sendAction()">Send</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let eventSource = null;
+        let currentSessionId = null;
+        let isStreaming = false;
+        let currentStreamText = '';
+
+        function connectToGame() {
+            const sessionId = document.getElementById('sessionIdInput').value.trim();
+
+            if (!sessionId) {
+                alert('Please enter a session ID');
+                return;
+            }
+
+            currentSessionId = sessionId;
+
+            // Connect to SSE stream
+            eventSource = new EventSource(`http://localhost:3000/api/game/stream/${sessionId}`);
+
+            // Handle incoming messages
+            eventSource.onmessage = (event) => {
+                try {
+                    const data = JSON.parse(event.data);
+                    handleSSEEvent(data);
+                } catch (error) {
+                    console.error('Error parsing SSE data:', error);
+                }
+            };
+
+            // Handle connection open
+            eventSource.onopen = () => {
+                updateConnectionStatus(true);
+                logEvent('connected', 'SSE connection established');
+            };
+
+            // Handle errors
+            eventSource.onerror = (error) => {
+                console.error('SSE error:', error);
+                updateConnectionStatus(false);
+                logEvent('error', 'Connection error occurred');
+            };
+
+            // Show game area
+            document.getElementById('setupArea').style.display = 'none';
+            document.getElementById('gameArea').style.display = 'block';
+        }
+
+        function handleSSEEvent(data) {
+            logEvent(data.type, JSON.stringify(data, null, 2));
+
+            switch(data.type) {
+                case 'connected':
+                    addSystemMessage('Connected to game session!');
+                    break;
+
+                case 'action_received':
+                    addSystemMessage(`Action received: "${data.action}"`);
+                    break;
+
+                case 'processing':
+                    addSystemMessage(data.message);
+                    isStreaming = true;
+                    currentStreamText = '';
+                    startNewGameMessage();
+                    break;
+
+                case 'response_chunk':
+                    currentStreamText += data.chunk;
+                    updateStreamingMessage(currentStreamText);
+                    break;
+
+                case 'state_update':
+                    addSystemMessage('Game state updated');
+                    break;
+
+                case 'action_options':
+                    addSystemMessage(`Available options: ${data.options.join(', ')}`);
+                    break;
+
+                case 'complete':
+                    isStreaming = false;
+                    finalizeStreamingMessage();
+                    addSystemMessage('✅ Action processing complete');
+                    break;
+
+                case 'error':
+                    isStreaming = false;
+                    addSystemMessage(`❌ Error: ${data.error}`);
+                    break;
+            }
+        }
+
+        function sendAction() {
+            const actionInput = document.getElementById('actionInput');
+            const action = actionInput.value.trim();
+
+            if (!action) {
+                alert('Please enter an action');
+                return;
+            }
+
+            // Add player message to chat
+            addPlayerMessage(action);
+
+            // Send action to SSE endpoint
+            fetch(`http://localhost:3000/api/game/stream/${currentSessionId}/action`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ action })
+            })
+            .then(res => res.json())
+            .then(data => {
+                console.log('Action sent:', data);
+            })
+            .catch(error => {
+                console.error('Error sending action:', error);
+                addSystemMessage(`❌ Error sending action: ${error.message}`);
+            });
+
+            // Clear input
+            actionInput.value = '';
+        }
+
+        function handleKeyPress(event) {
+            if (event.key === 'Enter') {
+                sendAction();
+            }
+        }
+
+        function addPlayerMessage(text) {
+            const chatArea = document.getElementById('chatArea');
+            const message = document.createElement('div');
+            message.className = 'message player';
+            message.innerHTML = `<div class="bubble">${escapeHtml(text)}</div>`;
+            chatArea.appendChild(message);
+            chatArea.scrollTop = chatArea.scrollHeight;
+        }
+
+        function addSystemMessage(text) {
+            const chatArea = document.getElementById('chatArea');
+            const message = document.createElement('div');
+            message.className = 'message system';
+            message.innerHTML = `<div class="bubble">${escapeHtml(text)}</div>`;
+            chatArea.appendChild(message);
+            chatArea.scrollTop = chatArea.scrollHeight;
+        }
+
+        let currentGameMessage = null;
+
+        function startNewGameMessage() {
+            const chatArea = document.getElementById('chatArea');
+            currentGameMessage = document.createElement('div');
+            currentGameMessage.className = 'message game';
+            currentGameMessage.innerHTML = `<div class="bubble"><span class="streaming-indicator"></span></div>`;
+            chatArea.appendChild(currentGameMessage);
+            chatArea.scrollTop = chatArea.scrollHeight;
+        }
+
+        function updateStreamingMessage(text) {
+            if (currentGameMessage) {
+                currentGameMessage.querySelector('.bubble').innerHTML =
+                    `${escapeHtml(text)}<span class="streaming-indicator"></span>`;
+                document.getElementById('chatArea').scrollTop = document.getElementById('chatArea').scrollHeight;
+            }
+        }
+
+        function finalizeStreamingMessage() {
+            if (currentGameMessage) {
+                currentGameMessage.querySelector('.bubble').innerHTML = escapeHtml(currentStreamText);
+                currentGameMessage = null;
+            }
+        }
+
+        function updateConnectionStatus(connected) {
+            const status = document.getElementById('connectionStatus');
+            if (connected) {
+                status.className = 'connection-status connected';
+                status.textContent = '🟢 Connected';
+            } else {
+                status.className = 'connection-status disconnected';
+                status.textContent = '🔴 Disconnected';
+            }
+        }
+
+        function logEvent(type, data) {
+            const eventLog = document.getElementById('eventLog');
+            const entry = document.createElement('div');
+            entry.className = 'event-entry';
+            entry.innerHTML = `
+                <span class="event-type">[${type}]</span>
+                <div style="color: #666; font-size: 0.9em; margin-top: 3px;">${new Date().toLocaleTimeString()}</div>
+            `;
+            eventLog.insertBefore(entry, eventLog.firstChild);
+
+            // Keep only last 20 entries
+            while (eventLog.children.length > 20) {
+                eventLog.removeChild(eventLog.lastChild);
+            }
+        }
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        // Cleanup on page unload
+        window.addEventListener('beforeunload', () => {
+            if (eventSource) {
+                eventSource.close();
+            }
+        });
+    </script>
+</body>
+</html>

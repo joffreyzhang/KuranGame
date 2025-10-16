@@ -1,0 +1,77 @@
+{
+  "version": "1.0",
+  "generatedAt": "2025-10-15T09:14:48.657Z",
+  "totalSessions": 4,
+  "sessions": [
+    {
+      "sessionId": "e69e54eb50b82879b1005cdc780f02fd",
+      "playerName": "Player",
+      "fileId": "cadbe2b63c2030d04687608e4f389ebe",
+      "createdAt": "2025-10-15T09:06:43.547Z",
+      "lastUpdated": "2025-10-15T09:14:48.634Z",
+      "isInitialized": true,
+      "files": {
+        "session": "session_e69e54eb50b82879b1005cdc780f02fd.json",
+        "status": "status_e69e54eb50b82879b1005cdc780f02fd.json",
+        "history": "history_e69e54eb50b82879b1005cdc780f02fd.json",
+        "latest": "latest_e69e54eb50b82879b1005cdc780f02fd.json"
+      },
+      "displayName": "Player - 2025/10/15 17:14:48",
+      "shortId": "e69e54eb"
+    },
+    {
+      "sessionId": "403d033d3a3d6047b369b874c7701d5a",
+      "playerName": "Player",
+      "fileId": "1759eef47909afba3cc07ac429c1fd61",
+      "createdAt": "2025-10-15T07:22:17.841Z",
+      "lastUpdated": "2025-10-15T07:39:18.268Z",
+      "isInitialized": true,
+      "files": {
+        "session": "session_403d033d3a3d6047b369b874c7701d5a.json",
+        "status": "status_403d033d3a3d6047b369b874c7701d5a.json",
+        "history": "history_403d033d3a3d6047b369b874c7701d5a.json",
+        "latest": "latest_403d033d3a3d6047b369b874c7701d5a.json"
+      },
+      "displayName": "Player - 2025/10/15 15:39:18",
+      "shortId": "403d033d"
+    },
+    {
+      "sessionId": "28133e1782053dd4bf62e1b2a0adee4a",
+      "playerName": "Player",
+      "fileId": "14fad760f26f8c49c0a19ec393e8df6e",
+      "createdAt": "2025-10-15T06:57:28.221Z",
+      "lastUpdated": "2025-10-15T07:12:46.425Z",
+      "isInitialized": true,
+      "files": {
+        "session": "session_28133e1782053dd4bf62e1b2a0adee4a.json",
+        "status": "status_28133e1782053dd4bf62e1b2a0adee4a.json",
+        "history": "history_28133e1782053dd4bf62e1b2a0adee4a.json",
+        "latest": "latest_28133e1782053dd4bf62e1b2a0adee4a.json"
+      },
+      "displayName": "Player - 2025/10/15 15:12:46",
+      "shortId": "28133e17"
+    },
+    {
+      "sessionId": "6abe0fd1e71948d92df135f4af01f09d",
+      "playerName": "Player",
+      "fileId": "fe9aa0a2ffa568d4f7c91895d187d957",
+      "createdAt": "2025-10-15T03:12:23.427Z",
+      "lastUpdated": "2025-10-15T03:20:54.396Z",
+      "isInitialized": true,
+      "files": {
+        "session": "session_6abe0fd1e71948d92df135f4af01f09d.json",
+        "status": "status_6abe0fd1e71948d92df135f4af01f09d.json",
+        "history": "history_6abe0fd1e71948d92df135f4af01f09d.json",
+        "latest": "latest_6abe0fd1e71948d92df135f4af01f09d.json"
+      },
+      "displayName": "Player - 2025/10/15 11:20:54",
+      "shortId": "6abe0fd1"
+    }
+  ],
+  "description": "Manifest file listing all available game sessions",
+  "usage": {
+    "listAll": "Read this file to get all available sessions",
+    "accessSession": "Use files.session, files.status, etc. to access specific data",
+    "directAccess": "Files can be accessed at /game_data/<filename>"
+  }
+}

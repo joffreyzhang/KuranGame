@@ -1,0 +1,62 @@
+{
+  "sessionId": "6abe0fd1e71948d92df135f4af01f09d",
+  "characterStatus": {
+    "character": {
+      "name": "Player",
+      "level": 1,
+      "health": 100,
+      "maxHealth": 100,
+      "energy": 100,
+      "maxEnergy": 100,
+      "experience": 0,
+      "money": 0
+    },
+    "attributes": {
+      "年龄": 16,
+      "容貌": 75,
+      "魅力": 60,
+      "心计": 50,
+      "体质": 70,
+      "声望": 30,
+      "才情": 65,
+      "媚术": 40,
+      "健康": 80,
+      "生命值": 100,
+      "能量": 55
+    },
+    "inventory": [
+      {
+        "id": "item_1760497943426_ol38y7f6k",
+        "name": "普通衣裳",
+        "description": "基础服装",
+        "quantity": 3,
+        "value": 10,
+        "addedAt": "2025-10-15T03:12:23.426Z"
+      },
+      {
+        "id": "item_1760497943426_dqrp6c632",
+        "name": "银两",
+        "description": "基础货币",
+        "quantity": 49,
+        "value": 50,
+        "addedAt": "2025-10-15T03:12:23.426Z"
+      },
+      {
+        "id": "item_1760497943426_hjzbiwlrk",
+        "name": "基础首饰",
+        "description": "简单的装饰品",
+        "quantity": 2,
+        "value": 8,
+        "addedAt": "2025-10-15T03:12:23.426Z"
+      }
+    ],
+    "location": "start",
+    "flags": {},
+    "relationships": {},
+    "achievements": [],
+    "sessionId": "6abe0fd1e71948d92df135f4af01f09d",
+    "createdAt": "2025-10-15T03:12:23.424Z",
+    "lastUpdated": "2025-10-15T03:18:01.162Z"
+  },
+  "lastUpdated": "2025-10-15T03:20:54.397Z"
+}

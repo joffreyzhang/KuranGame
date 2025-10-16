@@ -1,0 +1,26 @@
+services:
+  - type: web
+    name: interactive-fiction-backend
+    runtime: node
+    env: node
+    region: singapore
+    plan: free
+    buildCommand: npm install
+    startCommand: node server.js
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: CLAUDE_API_KEY
+        sync: false
+      - key: CLAUDE_BASE_URL
+        sync: false
+      - key: ENABLE_LLM_PARSING
+        value: true
+      - key: UPLOAD_DIR
+        value: uploads
+      - key: MAX_FILE_SIZE
+        value: 10485760
+    disk:
+      name: persistent-storage
+      mountPath: /opt/render/project/src
+      sizeGB: 1

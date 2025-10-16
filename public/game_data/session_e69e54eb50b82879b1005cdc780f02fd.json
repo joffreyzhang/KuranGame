@@ -1,0 +1,83 @@
+{
+  "sessionId": "e69e54eb50b82879b1005cdc780f02fd",
+  "fileId": "cadbe2b63c2030d04687608e4f389ebe",
+  "playerName": "Player",
+  "gameState": {
+    "currentLocation": "start",
+    "inventory": [
+      {
+        "id": "item_1760519203545_upisqisqk",
+        "name": "事务所股份",
+        "description": "默语分手事务所的创始人股份",
+        "quantity": 1,
+        "value": 0,
+        "addedAt": "2025-10-15T09:06:43.545Z"
+      },
+      {
+        "id": "item_1760519203545_utgobj8im",
+        "name": "个人房产",
+        "description": "市中心顶级公寓或郊区隐秘别墅",
+        "quantity": 1,
+        "value": 0,
+        "addedAt": "2025-10-15T09:06:43.545Z"
+      },
+      {
+        "id": "item_1760519203545_w54fs2c9p",
+        "name": "流动资金",
+        "description": "个人银行账户资金",
+        "quantity": 1,
+        "value": 0,
+        "addedAt": "2025-10-15T09:06:43.545Z"
+      },
+      {
+        "id": "item_1760519203545_l5ujy5ccy",
+        "name": "D级委托",
+        "description": "开局接到的第一个委托任务",
+        "quantity": 1,
+        "value": 0,
+        "addedAt": "2025-10-15T09:06:43.545Z"
+      },
+      {
+        "id": "item_1760519233986_1srhm030o",
+        "name": "高级定制职业装",
+        "description": "高级定制职业装",
+        "quantity": 1,
+        "value": 0,
+        "addedAt": "2025-10-15T09:07:13.986Z"
+      },
+      {
+        "id": "item_1760519233986_nw980fm90",
+        "name": "名牌手袋",
+        "description": "名牌手袋",
+        "quantity": 1,
+        "value": 0,
+        "addedAt": "2025-10-15T09:07:13.986Z"
+      },
+      {
+        "id": "item_1760519233986_jy1yfkep0",
+        "name": "事务所钥匙",
+        "description": "事务所钥匙",
+        "quantity": 1,
+        "value": 0,
+        "addedAt": "2025-10-15T09:07:13.986Z"
+      },
+      {
+        "id": "item_1760519233986_2gj0n940m",
+        "name": "空白合同",
+        "description": "空白合同",
+        "quantity": 1,
+        "value": 0,
+        "addedAt": "2025-10-15T09:07:13.986Z"
+      }
+    ],
+    "progress": {},
+    "flags": {},
+    "health": 100,
+    "createdAt": "2025-10-15T09:06:43.547Z",
+    "isInitialized": true,
+    "lastAction": "2025-10-15T09:14:44.783Z"
+  },
+  "createdAt": "2025-10-15T09:06:43.547Z",
+  "lastUpdated": "2025-10-15T09:14:48.634Z",
+  "isInitialized": true
+}

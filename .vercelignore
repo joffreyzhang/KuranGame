@@ -1,0 +1,36 @@
+# Vercel ignore file
+# Files to exclude from Vercel deployment
+
+# Development files
+.env.local
+.env.development
+
+# Git
+.git
+.gitignore
+
+# Documentation (not needed in deployment)
+DEPLOYMENT.md
+RENDER.md
+
+# Frontend-only project (not needed)
+../Interactive-fiction-frontend
+
+# Node modules (Vercel installs these)
+node_modules
+
+# Logs
+*.log
+npm-debug.log*
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode
+.idea
+
+# Test files
+*.test.js
+__tests__

@@ -1,0 +1,89 @@
+{
+  "sessionId": "example_abc123",
+  "createdAt": "2025-10-14T12:00:00.000Z",
+  "lastUpdated": "2025-10-14T12:45:00.000Z",
+  "character": {
+    "name": "Hero",
+    "level": 3,
+    "health": 95,
+    "maxHealth": 120,
+    "energy": 85,
+    "maxEnergy": 100,
+    "experience": 450,
+    "money": 250
+  },
+  "attributes": {
+    "strength": 14,
+    "intelligence": 12,
+    "charisma": 11,
+    "luck": 10
+  },
+  "inventory": [
+    {
+      "id": "item_1728912345_abc123",
+      "name": "魔法剑",
+      "description": "一把充满魔力的剑",
+      "quantity": 1,
+      "addedAt": "2025-10-14T12:15:00.000Z",
+      "type": "weapon",
+      "attack": 25
+    },
+    {
+      "id": "item_1728912367_def456",
+      "name": "生命药水",
+      "description": "恢复 50 点生命值",
+      "quantity": 3,
+      "addedAt": "2025-10-14T12:20:00.000Z",
+      "type": "consumable",
+      "healAmount": 50
+    },
+    {
+      "id": "item_1728912389_ghi789",
+      "name": "神秘钥匙",
+      "description": "打开古老宝箱的钥匙",
+      "quantity": 1,
+      "addedAt": "2025-10-14T12:30:00.000Z",
+      "type": "key"
+    }
+  ],
+  "location": "古老的森林深处",
+  "flags": {
+    "metWizard": true,
+    "acceptedQuest": true,
+    "defeatedGoblin": true,
+    "foundHiddenCave": false,
+    "usedMagicScroll": false
+  },
+  "relationships": {
+    "老巫师": 75,
+    "村长": 60,
+    "铁匠": 45,
+    "神秘旅者": 30
+  },
+  "achievements": [
+    {
+      "id": "achievement_1",
+      "name": "初次冒险",
+      "description": "开始你的冒险旅程",
+      "unlockedAt": "2025-10-14T12:05:00.000Z"
+    },
+    {
+      "id": "achievement_2",
+      "name": "战斗胜利",
+      "description": "在战斗中击败第一个敌人",
+      "unlockedAt": "2025-10-14T12:20:00.000Z"
+    },
+    {
+      "id": "achievement_3",
+      "name": "收集者",
+      "description": "收集了3件以上的物品",
+      "unlockedAt": "2025-10-14T12:35:00.000Z"
+    }
+  ],
+  "customAttributes": {
+    "reputation": 75,
+    "fame": 40,
+    "karma": 60
+  }
+}
+

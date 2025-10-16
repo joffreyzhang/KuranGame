@@ -1,0 +1,59 @@
+{
+  "sessionId": "403d033d3a3d6047b369b874c7701d5a",
+  "fileId": "1759eef47909afba3cc07ac429c1fd61",
+  "playerName": "Player",
+  "gameState": {
+    "currentLocation": "start",
+    "inventory": [
+      {
+        "id": "item_1760512937840_h5cozkhbe",
+        "name": "基础生存物资",
+        "description": "地狱岛提供的最基本生存资源",
+        "quantity": 1,
+        "value": 0,
+        "addedAt": "2025-10-15T07:22:17.840Z"
+      },
+      {
+        "id": "item_1760512937840_oai5hivmr",
+        "name": "个人行李",
+        "description": "录制前准备的基本生活用品",
+        "quantity": 1,
+        "value": 0,
+        "addedAt": "2025-10-15T07:22:17.840Z"
+      },
+      {
+        "id": "item_1760513020046_x0xgkhf3h",
+        "name": "基础生存包",
+        "description": "基础生存用品",
+        "quantity": 1,
+        "value": 0,
+        "addedAt": "2025-10-15T07:23:40.046Z"
+      },
+      {
+        "id": "item_1760513020046_rgxg9i9yi",
+        "name": "防晒霜",
+        "description": "防晒用品",
+        "quantity": 1,
+        "value": 0,
+        "addedAt": "2025-10-15T07:23:40.046Z"
+      },
+      {
+        "id": "item_1760513903701_tmvszm3fb",
+        "name": "谢景辞的西装外套",
+        "description": "高定西装外套",
+        "quantity": 1,
+        "value": 0,
+        "addedAt": "2025-10-15T07:38:23.701Z"
+      }
+    ],
+    "progress": {},
+    "flags": {},
+    "health": 95,
+    "createdAt": "2025-10-15T07:22:17.841Z",
+    "isInitialized": true,
+    "lastAction": "2025-10-15T07:39:12.513Z"
+  },
+  "createdAt": "2025-10-15T07:22:17.841Z",
+  "lastUpdated": "2025-10-15T07:39:18.268Z",
+  "isInitialized": true
+}

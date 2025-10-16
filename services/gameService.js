@@ -1,4 +1,5 @@
 import Anthropic from '@anthropic-ai/sdk';
+import dotenv from 'dotenv';
 import { prepareGameSettingsForLLM } from './gameSettingsService.js';
 import { 
   initializeStatus, 
@@ -14,10 +15,17 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import { dirname } from 'path';
 
+// Load environment variables
+dotenv.config();
+
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
 // Initialize Claude client
+console.log('🔍 GameService Environment Variables:');
+console.log('CLAUDE_API_KEY:', process.env.CLAUDE_API_KEY ? 'SET' : 'NOT SET');
+console.log('CLAUDE_BASE_URL:', process.env.CLAUDE_BASE_URL || 'NOT SET');
+
 const anthropic = new Anthropic({
   apiKey: process.env.CLAUDE_API_KEY,
   baseURL: process.env.CLAUDE_BASE_URL,
@@ -471,6 +479,9 @@ function updateGameState(session, action, response) {
   session.gameState.lastAction = new Date().toISOString();
 }
 
+// Export updateGameState function
+export { updateGameState };
+
 /**
  * Save session metadata for recovery
  */
@@ -558,4 +569,217 @@ export const getCharacterStatus = (sessionId) => {
 export const updateCharacterStatus = (sessionId, updates) => {
   return updateStatus(sessionId, updates);
 };
+
+/**
+ * Initialize game with Claude using streaming mode
+ */
+export async function initializeGameWithClaudeStreaming(session) {
+  try {
+    const gamePrompt = prepareGameSettingsForLLM(session.gameSettings);
+    const status = loadStatus(session.sessionId);
+    const statusPrompt = getStatusUpdatePrompt(status);
+    
+    const systemPrompt = `你是一个专业的互动小说游戏主持人（Game Master）。你将基于以下PDF文档中的设定来主持一个互动小说游戏。
+
+游戏设定内容：
+${gamePrompt}
+
+${statusPrompt}
+
+你的职责：
+1. 严格遵循PDF中提供的所有设定、规则和框架
+2. 根据PDF要求生成相应的可视化板块和模块（如人物面板、时间、地点、热搜等）
+3. 用生动、细腻的文笔描述剧情，营造沉浸式体验
+4. 根据玩家的选择和行动推进剧情发展
+5. 支持中英文双语交互
+6. 保持剧情连贯性和逻辑性
+7. 当游戏事件影响角色状态时，在回复中包含状态更新标记
+
+**重要：行动选项格式规范**
+在每次回复的结尾，你必须提供玩家可以选择的行动选项。
+使用以下特殊格式来标记行动选项（每个选项独占一行）：
+
+[ACTION: 选项描述文本]
+
+示例：
+[ACTION: 探索神秘的森林深处]
+[ACTION: 与NPC对话获取信息]
+[ACTION: 在旅馆休息恢复体力]
+
+注意：
+- 每个行动选项必须使用 [ACTION: ...] 格式
+- 每个选项独占一行
+- 通常提供3-5个选项
+- 选项要具体、可操作
+- 不要在其他地方使用这个格式
+
+现在，请根据PDF设定，开始这个互动小说游戏。请：
+1. 展示初始设定（时间、地点、相关信息板块等）
+2. 介绍游戏背景和当前情境
+3. 给玩家提供可选的行动选项（使用[ACTION: ...]格式）
+
+请用中文回复，语言要生动有趣。`;
+
+    // 使用流式模式
+    const stream = await anthropic.messages.create({
+      model: 'deepseek-chat',
+      max_tokens: 10000,
+      system: systemPrompt,
+      messages: [
+        {
+          role: 'user',
+          content: '开始游戏！请展示初始设定并开始剧情。'
+        }
+      ],
+      stream: true  // 启用流式模式
+    });
+
+    let fullResponse = '';
+    
+    // 处理流式响应
+    for await (const chunk of stream) {
+      if (chunk.type === 'content_block_delta') {
+        fullResponse += chunk.delta.text;
+      }
+    }
+
+    // 解析响应
+    const response = {
+      message: fullResponse
+    };
+    
+    // Store conversation in session
+    session.conversationHistory = [
+      {
+        role: 'user',
+        content: '开始游戏！请展示初始设定并开始剧情。'
+      },
+      {
+        role: 'assistant',
+        content: fullResponse
+      }
+    ];
+    
+    // Update game state based on action
+    updateGameState(session, '开始游戏', response);
+    
+    // Parse and apply status updates from Claude's response
+    const updatedStatus = await applyClaudeUpdates(session.sessionId, response.message);
+    session.characterStatus = updatedStatus;
+
+    // Extract action options for the frontend to render as buttons
+    const actionOptions = extractActionOptions(response.message);
+    
+    return {
+      response: response.message,
+      gameState: session.gameState,
+      characterStatus: updatedStatus,
+      actionOptions
+    };
+    
+  } catch (error) {
+    console.error('Claude API error:', error);
+    throw new Error(`Failed to initialize game with Claude: ${error.message}`);
+  }
+}
+
+/**
+ * Process player action with Claude using streaming mode
+ */
+export async function processPlayerActionStreaming(sessionId, action) {
+  try {
+    const session = getSession(sessionId);
+    if (!session) {
+      throw new Error('Session not found');
+    }
+
+    const status = loadStatus(sessionId);
+    const statusPrompt = getStatusUpdatePrompt(status);
+    
+    const systemPrompt = `你是一个专业的互动小说游戏主持人（Game Master）。你将基于以下PDF文档中的设定来主持一个互动小说游戏。
+
+游戏设定内容：
+${prepareGameSettingsForLLM(session.gameSettings)}
+
+${statusPrompt}
+
+你的职责：
+1. 严格遵循PDF中提供的所有设定、规则和框架
+2. 根据PDF要求生成相应的可视化板块和模块（如人物面板、时间、地点、热搜等）
+3. 用生动、细腻的文笔描述剧情，营造沉浸式体验
+4. 根据玩家的选择和行动推进剧情发展
+5. 支持中英文双语交互
+6. 保持剧情连贯性和逻辑性
+7. 当游戏事件影响角色状态时，在回复中包含状态更新标记
+
+**重要：行动选项格式规范**
+在每次回复的结尾，你必须提供玩家可以选择的行动选项。
+使用以下特殊格式来标记行动选项（每个选项独占一行）：
+
+[ACTION: 选项描述文本]
+
+示例：
+[ACTION: 探索神秘的森林深处]
+[ACTION: 与NPC对话获取信息]
+[ACTION: 在旅馆休息恢复体力]
+
+注意：
+- 每个行动选项必须使用 [ACTION: ...] 格式
+- 每个选项独占一行
+- 通常提供3-5个选项
+- 选项要具体、可操作
+- 不要在其他地方使用这个格式
+
+请用中文回复，语言要生动有趣。`;
+
+    // 使用流式模式
+    const stream = await anthropic.messages.create({
+      model: 'deepseek-chat',
+      max_tokens: 10000,
+      system: systemPrompt,
+      messages: [
+        {
+          role: 'user',
+          content: action
+        }
+      ],
+      stream: true  // 启用流式模式
+    });
+
+    let fullResponse = '';
+    
+    // 处理流式响应
+    for await (const chunk of stream) {
+      if (chunk.type === 'content_block_delta') {
+        fullResponse += chunk.delta.text;
+      }
+    }
+
+    // 解析响应
+    const response = {
+      message: fullResponse
+    };
+    
+    // Update game state based on action
+    updateGameState(session, action, response);
+    
+    // Parse and apply status updates from Claude's response
+    const updatedStatus = await applyClaudeUpdates(sessionId, response.message);
+    session.characterStatus = updatedStatus;
+
+    // Extract action options for the frontend to render as buttons
+    const actionOptions = extractActionOptions(response.message);
+    
+    return {
+      response: response.message,
+      gameState: session.gameState,
+      characterStatus: updatedStatus,
+      actionOptions
+    };
+    
+  } catch (error) {
+    console.error('Claude API error:', error);
+    throw new Error(`Failed to process action with Claude: ${error.message}`);
+  }
+}
 

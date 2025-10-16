@@ -832,9 +832,7 @@ export async function applyClaudeUpdates(sessionId, responseText) {
   }
 }
 
-/**
- * Get status summary for display
- */
+
 export function getStatusSummary(sessionId) {
   const status = loadStatus(sessionId);
   
@@ -852,24 +850,17 @@ export function getStatusSummary(sessionId) {
   };
 }
 
-/**
- * Export full status for saving/backup
- */
+
 export function exportStatus(sessionId) {
   return loadStatus(sessionId);
 }
 
-/**
- * Import status from backup
- */
+
 export function importStatus(sessionId, statusData) {
   saveStatus(sessionId, statusData);
   return statusData;
 }
 
-/**
- * Delete status file
- */
 export function deleteStatus(sessionId) {
   const prettyPath = getStatusFilePath(sessionId);
   const legacyPath = path.join(SAVES_DIR, `${sessionId}.json`);
@@ -945,9 +936,6 @@ function deepMerge(target, source) {
   return output;
 }
 
-/**
- * Generate prompt for Claude to include status updates
- */
 export function getStatusUpdatePrompt(status) {
   const attributesList = Object.entries(status.attributes || {})
     .map(([key, value]) => `- ${key}：${value}`)

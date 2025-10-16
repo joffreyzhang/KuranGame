@@ -208,6 +208,51 @@
             white-space: pre-wrap;
         }
 
+        /* Connection Status Styles */
+        .connection-status {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 12px;
+            border-radius: 20px;
+            background: rgba(255, 255, 255, 0.1);
+            font-size: 0.9em;
+            font-weight: 500;
+        }
+
+        .connection-status.connected {
+            background: rgba(40, 167, 69, 0.1);
+            color: #28a745;
+        }
+
+        .connection-status.disconnected {
+            background: rgba(220, 53, 69, 0.1);
+            color: #dc3545;
+        }
+
+        /* Streaming Text Styles */
+        .streaming-text {
+            font-family: 'Segoe UI', sans-serif;
+            line-height: 1.6;
+            color: #333;
+        }
+
+        .typing-cursor {
+            animation: blink 1s infinite;
+            color: #667eea;
+            font-weight: bold;
+        }
+
+        @keyframes blink {
+            0%, 50% { opacity: 1; }
+            51%, 100% { opacity: 0; }
+        }
+
+        .message.streaming .message-bubble {
+            border-left: 4px solid #667eea;
+            background: linear-gradient(90deg, #f8f9fa 0%, #ffffff 100%);
+        }
+
         .input-area {
             grid-column: 2 / -1;
             padding: 20px 30px;
@@ -331,6 +376,15 @@
 
         <!-- Status Panel -->
         <div class="status-panel" id="statusPanel">
+            <!-- Connection Status -->
+            <div class="status-section">
+                <h3>🔗 Connection</h3>
+                <div class="connection-status">
+                    <span id="statusIndicator">⚫</span>
+                    <span id="statusText">Disconnected</span>
+                </div>
+            </div>
+            
             <div class="status-section">
                 <h3>📊 Character</h3>
                 <div class="status-item">

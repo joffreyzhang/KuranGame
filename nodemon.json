@@ -1,0 +1,18 @@
+{
+  "watch": [
+    "*.js",
+    "routes/**/*.js",
+    "controllers/**/*.js",
+    "services/**/*.js",
+    "middleware/**/*.js"
+  ],
+  "ignore": [
+    "node_modules/**",
+    "public/game_data/**",
+    "game_saves/**",
+    "uploads/**",
+    "*.json"
+  ],
+  "ext": "js,json",
+  "delay": "1000"
+}

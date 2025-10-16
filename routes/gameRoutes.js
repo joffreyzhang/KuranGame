@@ -15,6 +15,7 @@ import {
 import {
   streamGameEvents,
   sendActionWithStream,
+  sendActionWithTrueStreaming,
   getActiveConnections
 } from '../controllers/sseController.js';
 
@@ -53,6 +54,9 @@ router.get('/stream/:sessionId', streamGameEvents);
 
 // Send action with SSE streaming response
 router.post('/stream/:sessionId/action', sendActionWithStream);
+
+// Send action with true streaming from Claude API
+router.post('/stream/:sessionId/action/true', sendActionWithTrueStreaming);
 
 // Get active SSE connections (for debugging)
 router.get('/stream/debug/connections', getActiveConnections);

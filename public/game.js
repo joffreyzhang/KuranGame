@@ -7,6 +7,20 @@ let sessionId = null;
 let fileId = null;
 let isProcessing = false;
 
+// SSE related variables
+let eventSource = null;
+let isSSEConnected = false;
+let currentStreamingMessage = null;
+
+// Debug variables
+let debugInfo = {
+    totalChunks: 0,
+    receivedChunks: 0,
+    startTime: null,
+    endTime: null,
+    fullText: ''
+};
+
 // DOM Elements
 const chatArea = document.getElementById('chatArea');
 const playerInput = document.getElementById('playerInput');
@@ -47,6 +61,9 @@ async function initializeGame() {
             sessionId = data.sessionId;
             addMessage('system', 'Game session created! Click "开始游戏" button to start.');
             removeHint();
+            
+            // Establish SSE connection immediately after session creation
+            connectSSE();
             
             // Load initial character status
             await loadCharacterStatus();
@@ -208,66 +225,28 @@ async function sendAction() {
     addLoadingIndicator();
 
     try {
-        const response = await fetch(`${API_BASE_URL}/game/action`, {
+        // Send to true streaming SSE endpoint
+        const response = await fetch(`${API_BASE_URL}/game/stream/${sessionId}/action/true`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
             },
-            body: JSON.stringify({
-                sessionId: sessionId,
-                action: action
-            })
+            body: JSON.stringify({ action })
         });
 
         const data = await response.json();
-
-        // Remove loading indicator
-        removeLoadingIndicator();
-
-        if (data.success) {
-            console.log('✅ Action response received:', {
-                hasResponse: !!data.response,
-                hasCharacterStatus: !!data.characterStatus,
-                hasActionOptions: !!data.actionOptions,
-                actionOptionsCount: data.actionOptions ? data.actionOptions.length : 0,
-                actionOptions: data.actionOptions
-            });
-
-            addMessage('game', data.response);
-
-            // Update character status if provided
-            if (data.characterStatus) {
-                updateStatusDisplay(data.characterStatus);
-            }
-
-            // Render action option buttons if provided
-            if (Array.isArray(data.actionOptions) && data.actionOptions.length > 0) {
-                console.log('🎯 Rendering action buttons:', data.actionOptions);
-                renderActionButtons(data.actionOptions);
-            } else {
-                console.log('⚠️ No action options to render');
-            }
-
-            // Hide start button after game starts
-            if (startGameBtn) {
-                startGameBtn.classList.add('hidden');
-            }
-
-            // Remove hint after first successful action
-            removeHint();
-        } else {
-            throw new Error(data.error || 'Failed to process action');
+        
+        if (!data.success) {
+            throw new Error(data.error || 'Failed to send action');
         }
+        
+        // Note: No longer processing data.response here, as response will come through SSE events
+        
     } catch (error) {
         console.error('Error sending action:', error);
         removeLoadingIndicator();
         addErrorMessage(`Error: ${error.message}`);
-    } finally {
-        // Re-enable input
-        isProcessing = false;
-        playerInput.disabled = false;
-        sendBtn.disabled = false;
-        playerInput.focus();
+        enableInput();
     }
 }
 
@@ -380,6 +359,236 @@ async function useItemFromInventory(itemId) {
 // Make function available globally
 window.useItemFromInventory = useItemFromInventory;
 
+// ========== SSE Functions ==========
+
+/**
+ * Connect to SSE stream for real-time game updates
+ */
+function connectSSE() {
+    if (eventSource) {
+        eventSource.close();
+    }
+    
+    console.log('🔗 Connecting to SSE stream...');
+    eventSource = new EventSource(`${API_BASE_URL}/game/stream/${sessionId}`);
+    
+    eventSource.onopen = () => {
+        isSSEConnected = true;
+        updateConnectionStatus(true);
+        console.log('✅ SSE connected');
+    };
+    
+    eventSource.onmessage = (event) => {
+        try {
+            const data = JSON.parse(event.data);
+            handleSSEEvent(data);
+        } catch (error) {
+            console.error('Error parsing SSE data:', error);
+        }
+    };
+    
+    eventSource.onerror = (error) => {
+        console.error('SSE error:', error);
+        isSSEConnected = false;
+        updateConnectionStatus(false);
+    };
+}
+
+/**
+ * Update connection status display
+ */
+function updateConnectionStatus(connected) {
+    const statusIndicator = document.getElementById('statusIndicator');
+    const statusText = document.getElementById('statusText');
+    
+    if (statusIndicator && statusText) {
+        if (connected) {
+            statusIndicator.textContent = '🟢';
+            statusText.textContent = 'Connected';
+        } else {
+            statusIndicator.textContent = '🔴';
+            statusText.textContent = 'Disconnected';
+        }
+    }
+}
+
+/**
+ * Handle SSE events from the server
+ */
+function handleSSEEvent(data) {
+    // Only log important events, not every chunk
+    if (data.type !== 'response_chunk') {
+        const timestamp = new Date().toLocaleTimeString();
+        console.log(`[${timestamp}] SSE Event:`, data.type, data);
+    }
+    
+    // Collect debug info silently (no console output)
+    if (data.type === 'response_chunk') {
+        debugInfo.receivedChunks++;
+        debugInfo.fullText += data.chunk;
+        
+        if (data.index === 0) {
+            debugInfo.startTime = new Date();
+            debugInfo.totalChunks = data.total;
+        }
+    }
+    
+    switch(data.type) {
+        case 'connected':
+            updateConnectionStatus(true);
+            break;
+            
+        case 'action_received':
+            // Action received, can show processing status
+            console.log('Action received:', data.action);
+            break;
+            
+        case 'processing':
+            // Start streaming display and remove loading indicator
+            resetDebugInfo();
+            removeLoadingIndicator();
+            startStreamingMessage();
+            break;
+            
+        case 'response_chunk':
+            // Stream text chunks (replaces addMessage('game', data.response))
+            appendStreamingText(data.chunk);
+            break;
+            
+        case 'state_update':
+            // Update game state (replaces updateStatusDisplay)
+            if (data.characterStatus) {
+                updateStatusDisplay(data.characterStatus);
+            }
+            break;
+            
+        case 'action_options':
+            // Display action options (replaces renderActionButtons)
+            if (Array.isArray(data.options) && data.options.length > 0) {
+                console.log('🎯 Rendering action buttons:', data.options);
+                renderActionButtons(data.options);
+            }
+            break;
+            
+        case 'complete':
+            // Complete processing (replaces finally block)
+            debugInfo.endTime = new Date();
+            const duration = debugInfo.endTime - debugInfo.startTime;
+            
+            console.log('🎉 Streaming Complete!', {
+                totalChunks: debugInfo.totalChunks,
+                receivedChunks: debugInfo.receivedChunks,
+                duration: `${duration}ms`,
+                fullTextLength: debugInfo.fullText.length,
+                fullText: debugInfo.fullText,
+                hasNewlines: debugInfo.fullText.includes('\n'),
+                newlineCount: (debugInfo.fullText.match(/\n/g) || []).length
+            });
+            
+            finalizeStreamingMessage();
+            enableInput();
+            
+            // Hide start button after game starts
+            if (startGameBtn) {
+                startGameBtn.classList.add('hidden');
+            }
+            removeHint();
+            break;
+            
+        case 'error':
+            // Error handling (replaces catch block)
+            addErrorMessage(data.error);
+            removeLoadingIndicator();
+            enableInput();
+            break;
+            
+        default:
+            console.warn('Unknown SSE event type:', data.type);
+    }
+}
+
+/**
+ * Start a new streaming message
+ */
+function startStreamingMessage() {
+    currentStreamingMessage = document.createElement('div');
+    currentStreamingMessage.className = 'message game streaming';
+    currentStreamingMessage.innerHTML = `
+        <div class="bubble">
+            <div class="streaming-text">
+                <span class="streaming-content"></span>
+                <span class="typing-cursor">|</span>
+            </div>
+        </div>
+    `;
+    
+    chatArea.appendChild(currentStreamingMessage);
+    chatArea.scrollTop = chatArea.scrollHeight;
+}
+
+/**
+ * Append text chunk to streaming message
+ */
+function appendStreamingText(chunk) {
+    if (currentStreamingMessage) {
+        const content = currentStreamingMessage.querySelector('.streaming-content');
+        
+        // Escape HTML to prevent XSS, then convert newlines to <br>
+        const escapedChunk = escapeHtml(chunk);
+        const formattedChunk = escapedChunk.replace(/\n/g, '<br>');
+        
+        content.innerHTML += formattedChunk;
+        chatArea.scrollTop = chatArea.scrollHeight;
+    }
+}
+
+/**
+ * Finalize streaming message (remove cursor, etc.)
+ */
+function finalizeStreamingMessage() {
+    if (currentStreamingMessage) {
+        // Remove typing cursor
+        const cursor = currentStreamingMessage.querySelector('.typing-cursor');
+        if (cursor) cursor.remove();
+        
+        // Remove streaming class
+        currentStreamingMessage.classList.remove('streaming');
+        currentStreamingMessage = null;
+    }
+}
+
+/**
+ * Enable input after processing
+ */
+function enableInput() {
+    isProcessing = false;
+    playerInput.disabled = false;
+    sendBtn.disabled = false;
+}
+
+/**
+ * Escape HTML to prevent XSS attacks
+ */
+function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+}
+
+/**
+ * Reset debug info for new action
+ */
+function resetDebugInfo() {
+    debugInfo = {
+        totalChunks: 0,
+        receivedChunks: 0,
+        startTime: null,
+        endTime: null,
+        fullText: ''
+    };
+}
+
 // Focus input on load
 playerInput.focus();
+
 

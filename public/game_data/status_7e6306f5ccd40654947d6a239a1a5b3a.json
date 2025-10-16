@@ -1,0 +1,157 @@
+{
+  "sessionId": "7e6306f5ccd40654947d6a239a1a5b3a",
+  "characterStatus": {
+    "character": {
+      "name": "Player",
+      "level": 1,
+      "health": 100,
+      "maxHealth": 100,
+      "energy": 100,
+      "maxEnergy": 100,
+      "experience": 0,
+      "money": 0
+    },
+    "attributes": {
+      "年龄": 16,
+      "容貌": 0
+    },
+    "inventory": [
+      {
+        "id": "item_1760616901148_j1of94tl4",
+        "name": "1.[下一个关键悲剧事件名称](预计发生时间",
+        "description": "1.[下一个关键悲剧事件名称](预计发生时间 - 从游戏设定中获得",
+        "quantity": 1,
+        "value": 0,
+        "addedAt": "2025-10-16T12:15:01.148Z"
+      },
+      {
+        "id": "item_1760616901148_eadcf3x4w",
+        "name": "2.[第二个关键悲剧事件名称](预计发生时间",
+        "description": "2.[第二个关键悲剧事件名称](预计发生时间 - 从游戏设定中获得",
+        "quantity": 1,
+        "value": 0,
+        "addedAt": "2025-10-16T12:15:01.148Z"
+      },
+      {
+        "id": "item_1760616901148_kizgvvrvg",
+        "name": "3.[最终悲剧结局名称](倒计时",
+        "description": "3.[最终悲剧结局名称](倒计时 - 从游戏设定中获得",
+        "quantity": 1,
+        "value": 0,
+        "addedAt": "2025-10-16T12:15:01.148Z"
+      },
+      {
+        "id": "item_1760616901148_gnbxd01cy",
+        "name": "：详细（名下房产/珠宝首饰/每月月例/私房钱）",
+        "description": "：详细（名下房产/珠宝首饰/每月月例/私房钱） - 从游戏设定中获得",
+        "quantity": 1,
+        "value": 0,
+        "addedAt": "2025-10-16T12:15:01.148Z"
+      },
+      {
+        "id": "item_1760616901148_mzf2wykmt",
+        "name": "：个人资产（珠宝/房产/股票）",
+        "description": "：个人资产（珠宝/房产/股票） - 从游戏设定中获得",
+        "quantity": 1,
+        "value": 0,
+        "addedAt": "2025-10-16T12:15:01.148Z"
+      },
+      {
+        "id": "item_1760616901148_pplauaqnk",
+        "name": "技能证书（钢琴等级/外语证书）",
+        "description": "技能证书（钢琴等级/外语证书） - 从游戏设定中获得",
+        "quantity": 1,
+        "value": 0,
+        "addedAt": "2025-10-16T12:15:01.148Z"
+      },
+      {
+        "id": "item_1760616901148_ezptticx4",
+        "name": "支出（衣着首饰/交际应酬/秘密活动经费）",
+        "description": "支出（衣着首饰/交际应酬/秘密活动经费） - 从游戏设定中获得",
+        "quantity": 1,
+        "value": 0,
+        "addedAt": "2025-10-16T12:15:01.148Z"
+      },
+      {
+        "id": "item_1760616901148_z6p6ef38v",
+        "name": "：房产（公馆",
+        "description": "：房产（公馆 - 从游戏设定中获得",
+        "quantity": 1,
+        "value": 0,
+        "addedAt": "2025-10-16T12:15:01.148Z"
+      },
+      {
+        "id": "item_1760616901148_m37rstb1a",
+        "name": "洋房）",
+        "description": "洋房） - 从游戏设定中获得",
+        "quantity": 1,
+        "value": 0,
+        "addedAt": "2025-10-16T12:15:01.148Z"
+      },
+      {
+        "id": "item_1760616901148_jfhounpe6",
+        "name": "田产",
+        "description": "田产 - 从游戏设定中获得",
+        "quantity": 1,
+        "value": 0,
+        "addedAt": "2025-10-16T12:15:01.148Z"
+      },
+      {
+        "id": "item_1760616901148_6kqjovo96",
+        "name": "店铺。",
+        "description": "店铺。 - 从游戏设定中获得",
+        "quantity": 1,
+        "value": 0,
+        "addedAt": "2025-10-16T12:15:01.148Z"
+      },
+      {
+        "id": "item_1760616901148_kzu72igwc",
+        "name": "：金条",
+        "description": "：金条 - 从游戏设定中获得",
+        "quantity": 1,
+        "value": 0,
+        "addedAt": "2025-10-16T12:15:01.148Z"
+      },
+      {
+        "id": "item_1760616901148_5k8s82lk6",
+        "name": "美元",
+        "description": "美元 - 从游戏设定中获得",
+        "quantity": 1,
+        "value": 0,
+        "addedAt": "2025-10-16T12:15:01.148Z"
+      },
+      {
+        "id": "item_1760616901148_zexh23gu7",
+        "name": "大洋",
+        "description": "大洋 - 从游戏设定中获得",
+        "quantity": 1,
+        "value": 0,
+        "addedAt": "2025-10-16T12:15:01.148Z"
+      },
+      {
+        "id": "item_1760616901148_gre1xd378",
+        "name": "珠宝首饰",
+        "description": "珠宝首饰 - 从游戏设定中获得",
+        "quantity": 1,
+        "value": 0,
+        "addedAt": "2025-10-16T12:15:01.148Z"
+      },
+      {
+        "id": "item_1760616901148_rgfxhvy0f",
+        "name": "古董字画。",
+        "description": "古董字画。 - 从游戏设定中获得",
+        "quantity": 1,
+        "value": 0,
+        "addedAt": "2025-10-16T12:15:01.148Z"
+      }
+    ],
+    "location": "start",
+    "flags": {},
+    "relationships": {},
+    "achievements": [],
+    "sessionId": "7e6306f5ccd40654947d6a239a1a5b3a",
+    "createdAt": "2025-10-16T12:15:01.146Z",
+    "lastUpdated": "2025-10-16T12:15:01.146Z"
+  },
+  "lastUpdated": "2025-10-16T12:15:01.153Z"
+}

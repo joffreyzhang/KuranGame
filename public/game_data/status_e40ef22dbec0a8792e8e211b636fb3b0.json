@@ -1,0 +1,278 @@
+{
+  "sessionId": "e40ef22dbec0a8792e8e211b636fb3b0",
+  "characterStatus": {
+    "character": {
+      "name": "Player",
+      "level": 1,
+      "health": 100,
+      "maxHealth": 100,
+      "energy": 100,
+      "maxEnergy": 100,
+      "experience": 0,
+      "money": 0
+    },
+    "attributes": {
+      "容貌": 0,
+      "业内声望": 50,
+      "▌各年龄阶段": 0
+    },
+    "inventory": [
+      {
+        "id": "item_1760604475176_j0rdim7rg",
+        "name": "初始生成以下属性（开局必须全部显示出来",
+        "description": "初始生成以下属性（开局必须全部显示出来 - 从游戏设定中获得",
+        "quantity": 1,
+        "value": 0,
+        "addedAt": "2025-10-16T08:47:55.176Z"
+      },
+      {
+        "id": "item_1760604475176_41h7kkxzx",
+        "name": "不准省略）",
+        "description": "不准省略） - 从游戏设定中获得",
+        "quantity": 1,
+        "value": 0,
+        "addedAt": "2025-10-16T08:47:55.176Z"
+      },
+      {
+        "id": "item_1760604475176_fo5xg2tcp",
+        "name": "：详细（含事务所股份",
+        "description": "：详细（含事务所股份 - 从游戏设定中获得",
+        "quantity": 1,
+        "value": 0,
+        "addedAt": "2025-10-16T08:47:55.176Z"
+      },
+      {
+        "id": "item_1760604475176_ukf11lynj",
+        "name": "个人房产",
+        "description": "个人房产 - 从游戏设定中获得",
+        "quantity": 1,
+        "value": 0,
+        "addedAt": "2025-10-16T08:47:55.176Z"
+      },
+      {
+        "id": "item_1760604475176_g3kmqcgr3",
+        "name": "投资",
+        "description": "投资 - 从游戏设定中获得",
+        "quantity": 1,
+        "value": 0,
+        "addedAt": "2025-10-16T08:47:55.176Z"
+      },
+      {
+        "id": "item_1760604475176_snjsx6lqf",
+        "name": "流动资金",
+        "description": "流动资金 - 从游戏设定中获得",
+        "quantity": 1,
+        "value": 0,
+        "addedAt": "2025-10-16T08:47:55.176Z"
+      },
+      {
+        "id": "item_1760604475176_hbs3jseiw",
+        "name": "负债）",
+        "description": "负债） - 从游戏设定中获得",
+        "quantity": 1,
+        "value": 0,
+        "addedAt": "2025-10-16T08:47:55.176Z"
+      },
+      {
+        "id": "item_1760604475176_nlua1z7yw",
+        "name": "（事务所分红/投资收益）通过提高收费/风险投资/理财规划提升",
+        "description": "（事务所分红/投资收益）通过提高收费/风险投资/理财规划提升 - 从游戏设定中获得",
+        "quantity": 1,
+        "value": 0,
+        "addedAt": "2025-10-16T08:47:55.176Z"
+      },
+      {
+        "id": "item_1760604475176_m0b1sd2ln",
+        "name": "（每次行动增幅1-3",
+        "description": "（每次行动增幅1-3 - 从游戏设定中获得",
+        "quantity": 1,
+        "value": 0,
+        "addedAt": "2025-10-16T08:47:55.176Z"
+      },
+      {
+        "id": "item_1760604475176_lan3r8jl9",
+        "name": "受天赋影响±1",
+        "description": "受天赋影响±1 - 从游戏设定中获得",
+        "quantity": 1,
+        "value": 0,
+        "addedAt": "2025-10-16T08:47:55.176Z"
+      },
+      {
+        "id": "item_1760604475177_oyyyeankp",
+        "name": "受天赋/状态影响±1）",
+        "description": "受天赋/状态影响±1） - 从游戏设定中获得",
+        "quantity": 1,
+        "value": 0,
+        "addedAt": "2025-10-16T08:47:55.177Z"
+      },
+      {
+        "id": "item_1760604475177_yln8rbgy0",
+        "name": "▋注意！每回合必须以表格可视化形式显示",
+        "description": "▋注意！每回合必须以表格可视化形式显示 - 从游戏设定中获得",
+        "quantity": 1,
+        "value": 0,
+        "addedAt": "2025-10-16T08:47:55.177Z"
+      },
+      {
+        "id": "item_1760604475177_0ktcog4o1",
+        "name": "在玩家选择选项后",
+        "description": "在玩家选择选项后 - 从游戏设定中获得",
+        "quantity": 1,
+        "value": 0,
+        "addedAt": "2025-10-16T08:47:55.177Z"
+      },
+      {
+        "id": "item_1760604475177_uoezzl8r9",
+        "name": "你要给出相关时间",
+        "description": "你要给出相关时间 - 从游戏设定中获得",
+        "quantity": 1,
+        "value": 0,
+        "addedAt": "2025-10-16T08:47:55.177Z"
+      },
+      {
+        "id": "item_1760604475177_83emqkkqm",
+        "name": "规划及相应属性增减数据！当遇到突发事件事件/随机事件",
+        "description": "规划及相应属性增减数据！当遇到突发事件事件/随机事件 - 从游戏设定中获得",
+        "quantity": 1,
+        "value": 0,
+        "addedAt": "2025-10-16T08:47:55.177Z"
+      },
+      {
+        "id": "item_1760604475177_aqtv6dmdq",
+        "name": "必须根据主角性格进行",
+        "description": "必须根据主角性格进行 - 从游戏设定中获得",
+        "quantity": 1,
+        "value": 0,
+        "addedAt": "2025-10-16T08:47:55.177Z"
+      },
+      {
+        "id": "item_1760604475177_dete6h8cb",
+        "name": "选择（玩家不需要做选择",
+        "description": "选择（玩家不需要做选择 - 从游戏设定中获得",
+        "quantity": 1,
+        "value": 0,
+        "addedAt": "2025-10-16T08:47:55.177Z"
+      },
+      {
+        "id": "item_1760604475177_ar1i0vfk6",
+        "name": "请不要给培养选项之外的选择）",
+        "description": "请不要给培养选项之外的选择） - 从游戏设定中获得",
+        "quantity": 1,
+        "value": 0,
+        "addedAt": "2025-10-16T08:47:55.177Z"
+      },
+      {
+        "id": "item_1760604475177_bpkagmjxy",
+        "name": "请不要强制干预！",
+        "description": "请不要强制干预！ - 从游戏设定中获得",
+        "quantity": 1,
+        "value": 0,
+        "addedAt": "2025-10-16T08:47:55.177Z"
+      },
+      {
+        "id": "item_1760604475177_g1xxvpccw",
+        "name": "分割",
+        "description": "分割 - 从游戏设定中获得",
+        "quantity": 1,
+        "value": 0,
+        "addedAt": "2025-10-16T08:47:55.177Z"
+      },
+      {
+        "id": "item_1760604475177_prnl3i59k",
+        "name": "抚养权",
+        "description": "抚养权 - 从游戏设定中获得",
+        "quantity": 1,
+        "value": 0,
+        "addedAt": "2025-10-16T08:47:55.177Z"
+      },
+      {
+        "id": "item_1760604475177_52jyf59at",
+        "name": "等问题",
+        "description": "等问题 - 从游戏设定中获得",
+        "quantity": 1,
+        "value": 0,
+        "addedAt": "2025-10-16T08:47:55.177Z"
+      },
+      {
+        "id": "item_1760604475177_flp8upg06",
+        "name": "是你的“防火墙”。",
+        "description": "是你的“防火墙”。 - 从游戏设定中获得",
+        "quantity": 1,
+        "value": 0,
+        "addedAt": "2025-10-16T08:47:55.177Z"
+      },
+      {
+        "id": "item_1760604475177_rtt4hfvru",
+        "name": "纠葛少",
+        "description": "纠葛少 - 从游戏设定中获得",
+        "quantity": 1,
+        "value": 0,
+        "addedAt": "2025-10-16T08:47:55.177Z"
+      },
+      {
+        "id": "item_1760604475177_lyah8f5eg",
+        "name": "目标人物性格温和。",
+        "description": "目标人物性格温和。 - 从游戏设定中获得",
+        "quantity": 1,
+        "value": 0,
+        "addedAt": "2025-10-16T08:47:55.177Z"
+      },
+      {
+        "id": "item_1760604475177_l4c461jfd",
+        "name": "分割或职场影响。",
+        "description": "分割或职场影响。 - 从游戏设定中获得",
+        "quantity": 1,
+        "value": 0,
+        "addedAt": "2025-10-16T08:47:55.177Z"
+      },
+      {
+        "id": "item_1760604475177_6bzca05gp",
+        "name": "交割",
+        "description": "交割 - 从游戏设定中获得",
+        "quantity": 1,
+        "value": 0,
+        "addedAt": "2025-10-16T08:47:55.177Z"
+      },
+      {
+        "id": "item_1760604475177_ysyjqv946",
+        "name": "并在必要时启动舆论预案",
+        "description": "并在必要时启动舆论预案 - 从游戏设定中获得",
+        "quantity": 1,
+        "value": 0,
+        "addedAt": "2025-10-16T08:47:55.177Z"
+      },
+      {
+        "id": "item_1760604475177_ni48aib3h",
+        "name": "确保客户",
+        "description": "确保客户 - 从游戏设定中获得",
+        "quantity": 1,
+        "value": 0,
+        "addedAt": "2025-10-16T08:47:55.177Z"
+      },
+      {
+        "id": "item_1760604475177_37g1lsjp0",
+        "name": "“体面”退场。",
+        "description": "“体面”退场。 - 从游戏设定中获得",
+        "quantity": 1,
+        "value": 0,
+        "addedAt": "2025-10-16T08:47:55.177Z"
+      },
+      {
+        "id": "item_1760604475177_515yq91y8",
+        "name": "可按比例抽取佣金。",
+        "description": "可按比例抽取佣金。 - 从游戏设定中获得",
+        "quantity": 1,
+        "value": 0,
+        "addedAt": "2025-10-16T08:47:55.177Z"
+      }
+    ],
+    "location": "start",
+    "flags": {},
+    "relationships": {},
+    "achievements": [],
+    "sessionId": "e40ef22dbec0a8792e8e211b636fb3b0",
+    "createdAt": "2025-10-16T08:47:55.174Z",
+    "lastUpdated": "2025-10-16T08:47:55.174Z"
+  },
+  "lastUpdated": "2025-10-16T08:47:55.184Z"
+}

@@ -1,0 +1,486 @@
+{
+  "sessionId": "40dd908cc21ec3b8189645e48640f905",
+  "characterStatus": {
+    "character": {
+      "name": "Player",
+      "level": 1,
+      "health": 100,
+      "maxHealth": 100,
+      "energy": 100,
+      "maxEnergy": 100,
+      "experience": 0,
+      "money": 0
+    },
+    "attributes": {
+      "年龄": 15,
+      "容貌": 0,
+      "声望": 1
+    },
+    "inventory": [
+      {
+        "id": "item_1760606895315_pk6hi2wz8",
+        "name": "：（显示银两/珠宝首饰/私产地契等明细",
+        "description": "：（显示银两/珠宝首饰/私产地契等明细 - 从游戏设定中获得",
+        "quantity": 1,
+        "value": 0,
+        "addedAt": "2025-10-16T09:28:15.315Z"
+      },
+      {
+        "id": "item_1760606895315_871pgnz72",
+        "name": "会影响你赎身",
+        "description": "会影响你赎身 - 从游戏设定中获得",
+        "quantity": 1,
+        "value": 0,
+        "addedAt": "2025-10-16T09:28:15.315Z"
+      },
+      {
+        "id": "item_1760606895315_4iembwpnf",
+        "name": "打点关系",
+        "description": "打点关系 - 从游戏设定中获得",
+        "quantity": 1,
+        "value": 0,
+        "addedAt": "2025-10-16T09:28:15.315Z"
+      },
+      {
+        "id": "item_1760606895315_kqkie0lvm",
+        "name": "买人心等）",
+        "description": "买人心等） - 从游戏设定中获得",
+        "quantity": 1,
+        "value": 0,
+        "addedAt": "2025-10-16T09:28:15.315Z"
+      },
+      {
+        "id": "item_1760606895315_2pfxk5iq4",
+        "name": "打探市井秘闻",
+        "description": "打探市井秘闻 - 从游戏设定中获得",
+        "quantity": 1,
+        "value": 0,
+        "addedAt": "2025-10-16T09:28:15.315Z"
+      },
+      {
+        "id": "item_1760606895315_fpgzyco5z",
+        "name": "甚至在你需要逃",
+        "description": "甚至在你需要逃 - 从游戏设定中获得",
+        "quantity": 1,
+        "value": 0,
+        "addedAt": "2025-10-16T09:28:15.315Z"
+      },
+      {
+        "id": "item_1760606895315_2h363vn1r",
+        "name": "离时为你提供意想不到的帮助。",
+        "description": "离时为你提供意想不到的帮助。 - 从游戏设定中获得",
+        "quantity": 1,
+        "value": 0,
+        "addedAt": "2025-10-16T09:28:15.315Z"
+      },
+      {
+        "id": "item_1760606895315_tt7g2m9ji",
+        "name": "④情缘面板（这个模块每回合显示主角情缘面板",
+        "description": "④情缘面板（这个模块每回合显示主角情缘面板 - 从游戏设定中获得",
+        "quantity": 1,
+        "value": 0,
+        "addedAt": "2025-10-16T09:28:15.315Z"
+      },
+      {
+        "id": "item_1760606895315_rlgkdgk7u",
+        "name": "情缘（有情缘羁绊的角色",
+        "description": "情缘（有情缘羁绊的角色 - 从游戏设定中获得",
+        "quantity": 1,
+        "value": 0,
+        "addedAt": "2025-10-16T09:28:15.315Z"
+      },
+      {
+        "id": "item_1760606895315_cq6v7l6c0",
+        "name": "。每个姑",
+        "description": "。每个姑 - 从游戏设定中获得",
+        "quantity": 1,
+        "value": 0,
+        "addedAt": "2025-10-16T09:28:15.315Z"
+      },
+      {
+        "id": "item_1760606895315_1xz1li6ri",
+        "name": "娘都是她投资的商品",
+        "description": "娘都是她投资的商品 - 从游戏设定中获得",
+        "quantity": 1,
+        "value": 0,
+        "addedAt": "2025-10-16T09:28:15.315Z"
+      },
+      {
+        "id": "item_1760606895315_8e0p5vxp5",
+        "name": "她会为你提供最好的培训",
+        "description": "她会为你提供最好的培训 - 从游戏设定中获得",
+        "quantity": 1,
+        "value": 0,
+        "addedAt": "2025-10-16T09:28:15.315Z"
+      },
+      {
+        "id": "item_1760606895315_sjvnukjis",
+        "name": "也会在你失去价值时毫不留情",
+        "description": "也会在你失去价值时毫不留情 - 从游戏设定中获得",
+        "quantity": 1,
+        "value": 0,
+        "addedAt": "2025-10-16T09:28:15.315Z"
+      },
+      {
+        "id": "item_1760606895315_sz835rgv8",
+        "name": "地将你抛弃。她精于“调教”",
+        "description": "地将你抛弃。她精于“调教” - 从游戏设定中获得",
+        "quantity": 1,
+        "value": 0,
+        "addedAt": "2025-10-16T09:28:15.315Z"
+      },
+      {
+        "id": "item_1760606895315_vzfzvn2mh",
+        "name": "不仅是调教姑娘们的技艺",
+        "description": "不仅是调教姑娘们的技艺 - 从游戏设定中获得",
+        "quantity": 1,
+        "value": 0,
+        "addedAt": "2025-10-16T09:28:15.315Z"
+      },
+      {
+        "id": "item_1760606895315_n9nebmms4",
+        "name": "更是调教她们如何取",
+        "description": "更是调教她们如何取 - 从游戏设定中获得",
+        "quantity": 1,
+        "value": 0,
+        "addedAt": "2025-10-16T09:28:15.315Z"
+      },
+      {
+        "id": "item_1760606895315_8isqr29yf",
+        "name": "悦男人。",
+        "description": "悦男人。 - 从游戏设定中获得",
+        "quantity": 1,
+        "value": 0,
+        "addedAt": "2025-10-16T09:28:15.315Z"
+      },
+      {
+        "id": "item_1760606895315_fhe4clbxx",
+        "name": "花魁-沈惊鸿",
+        "description": "花魁-沈惊鸿 - 从游戏设定中获得",
+        "quantity": 1,
+        "value": 0,
+        "addedAt": "2025-10-16T09:28:15.315Z"
+      },
+      {
+        "id": "item_1760606895315_uylwrlexk",
+        "name": "倚月楼的“镇楼之宝”",
+        "description": "倚月楼的“镇楼之宝” - 从游戏设定中获得",
+        "quantity": 1,
+        "value": 0,
+        "addedAt": "2025-10-16T09:28:15.315Z"
+      },
+      {
+        "id": "item_1760606895315_m6ni1u1nh",
+        "name": "洛京城最昂贵的女人。她的时间以黄金计算",
+        "description": "洛京城最昂贵的女人。她的时间以黄金计算 - 从游戏设定中获得",
+        "quantity": 1,
+        "value": 0,
+        "addedAt": "2025-10-16T09:28:15.315Z"
+      },
+      {
+        "id": "item_1760606895315_x8l10lmty",
+        "name": "与她共",
+        "description": "与她共 - 从游戏设定中获得",
+        "quantity": 1,
+        "value": 0,
+        "addedAt": "2025-10-16T09:28:15.315Z"
+      },
+      {
+        "id": "item_1760606895315_r0xmwkbtg",
+        "name": "度一宵是无数权贵身份的象征。她不仅是恩客的梦",
+        "description": "度一宵是无数权贵身份的象征。她不仅是恩客的梦 - 从游戏设定中获得",
+        "quantity": 1,
+        "value": 0,
+        "addedAt": "2025-10-16T09:28:15.315Z"
+      },
+      {
+        "id": "item_1760606895315_uap83r5ab",
+        "name": "更是苏三娘最大的摇钱树。",
+        "description": "更是苏三娘最大的摇钱树。 - 从游戏设定中获得",
+        "quantity": 1,
+        "value": 0,
+        "addedAt": "2025-10-16T09:28:15.315Z"
+      },
+      {
+        "id": "item_1760606895315_wgrttfbdk",
+        "name": "她的一颦一笑都能搅动洛京的风云",
+        "description": "她的一颦一笑都能搅动洛京的风云 - 从游戏设定中获得",
+        "quantity": 1,
+        "value": 0,
+        "addedAt": "2025-10-16T09:28:15.315Z"
+      },
+      {
+        "id": "item_1760606895315_teqyz92lq",
+        "name": "她是你的终极目标",
+        "description": "她是你的终极目标 - 从游戏设定中获得",
+        "quantity": 1,
+        "value": 0,
+        "addedAt": "2025-10-16T09:28:15.315Z"
+      },
+      {
+        "id": "item_1760606895315_p4d91ly5s",
+        "name": "也是你头顶最沉重的阴",
+        "description": "也是你头顶最沉重的阴 - 从游戏设定中获得",
+        "quantity": 1,
+        "value": 0,
+        "addedAt": "2025-10-16T09:28:15.315Z"
+      },
+      {
+        "id": "item_1760606895315_3pu3brsbc",
+        "name": "影。",
+        "description": "影。 - 从游戏设定中获得",
+        "quantity": 1,
+        "value": 0,
+        "addedAt": "2025-10-16T09:28:15.315Z"
+      },
+      {
+        "id": "item_1760606895315_19m706yji",
+        "name": "红牌",
+        "description": "红牌 - 从游戏设定中获得",
+        "quantity": 1,
+        "value": 0,
+        "addedAt": "2025-10-16T09:28:15.315Z"
+      },
+      {
+        "id": "item_1760606895315_pl9mkmgyw",
+        "name": "楼里的中流砥柱",
+        "description": "楼里的中流砥柱 - 从游戏设定中获得",
+        "quantity": 1,
+        "value": 0,
+        "addedAt": "2025-10-16T09:28:15.315Z"
+      },
+      {
+        "id": "item_1760606895315_bedafmom9",
+        "name": "已经拥有自己稳定的“金主”（长期",
+        "description": "已经拥有自己稳定的“金主”（长期 - 从游戏设定中获得",
+        "quantity": 1,
+        "value": 0,
+        "addedAt": "2025-10-16T09:28:15.315Z"
+      },
+      {
+        "id": "item_1760606895315_w2y10lw10",
+        "name": "主要的恩客）。她们",
+        "description": "主要的恩客）。她们 - 从游戏设定中获得",
+        "quantity": 1,
+        "value": 0,
+        "addedAt": "2025-10-16T09:28:15.315Z"
+      },
+      {
+        "id": "item_1760606895315_l9c3xuuvg",
+        "name": "不必再像底层姑娘一样每天抛头露面",
+        "description": "不必再像底层姑娘一样每天抛头露面 - 从游戏设定中获得",
+        "quantity": 1,
+        "value": 0,
+        "addedAt": "2025-10-16T09:28:15.315Z"
+      },
+      {
+        "id": "item_1760606895315_sgxcpiwlm",
+        "name": "有了挑选客人的资本。她们是你最直接的",
+        "description": "有了挑选客人的资本。她们是你最直接的 - 从游戏设定中获得",
+        "quantity": 1,
+        "value": 0,
+        "addedAt": "2025-10-16T09:28:15.315Z"
+      },
+      {
+        "id": "item_1760606895315_bmvbab2s4",
+        "name": "竞争者",
+        "description": "竞争者 - 从游戏设定中获得",
+        "quantity": 1,
+        "value": 0,
+        "addedAt": "2025-10-16T09:28:15.315Z"
+      },
+      {
+        "id": "item_1760606895315_rim32uq2h",
+        "name": "会不择手段地抢夺新出现的优质恩客",
+        "description": "会不择手段地抢夺新出现的优质恩客 - 从游戏设定中获得",
+        "quantity": 1,
+        "value": 0,
+        "addedAt": "2025-10-16T09:28:15.315Z"
+      },
+      {
+        "id": "item_1760606895315_9fhj02au3",
+        "name": "巩固自己的地位。",
+        "description": "巩固自己的地位。 - 从游戏设定中获得",
+        "quantity": 1,
+        "value": 0,
+        "addedAt": "2025-10-16T09:28:15.315Z"
+      },
+      {
+        "id": "item_1760606895315_huxvekgv6",
+        "name": "小红倌",
+        "description": "小红倌 - 从游戏设定中获得",
+        "quantity": 1,
+        "value": 0,
+        "addedAt": "2025-10-16T09:28:15.315Z"
+      },
+      {
+        "id": "item_1760606895315_a7hbg5dbt",
+        "name": "你的初始身份。你已经完成了基础的技艺培训",
+        "description": "你的初始身份。你已经完成了基础的技艺培训 - 从游戏设定中获得",
+        "quantity": 1,
+        "value": 0,
+        "addedAt": "2025-10-16T09:28:15.315Z"
+      },
+      {
+        "id": "item_1760606895315_dd8r4mjhh",
+        "name": "度过了最初的“梳拢”阶段",
+        "description": "度过了最初的“梳拢”阶段 - 从游戏设定中获得",
+        "quantity": 1,
+        "value": 0,
+        "addedAt": "2025-10-16T09:28:15.315Z"
+      },
+      {
+        "id": "item_1760606895315_l0ooyz5i6",
+        "name": "正式挂牌接客。你就像货架上的商品",
+        "description": "正式挂牌接客。你就像货架上的商品 - 从游戏设定中获得",
+        "quantity": 1,
+        "value": 0,
+        "addedAt": "2025-10-16T09:28:15.315Z"
+      },
+      {
+        "id": "item_1760606895315_s3qhak3vm",
+        "name": "有了标价",
+        "description": "有了标价 - 从游戏设定中获得",
+        "quantity": 1,
+        "value": 0,
+        "addedAt": "2025-10-16T09:28:15.315Z"
+      },
+      {
+        "id": "item_1760606895315_1vodeex1t",
+        "name": "但还不够高。你必须在“公共",
+        "description": "但还不够高。你必须在“公共 - 从游戏设定中获得",
+        "quantity": 1,
+        "value": 0,
+        "addedAt": "2025-10-16T09:28:15.315Z"
+      },
+      {
+        "id": "item_1760606895315_718kcxjyp",
+        "name": "场”（如大堂",
+        "description": "场”（如大堂 - 从游戏设定中获得",
+        "quantity": 1,
+        "value": 0,
+        "addedAt": "2025-10-16T09:28:15.315Z"
+      },
+      {
+        "id": "item_1760606895315_jq1omvkos",
+        "name": "酒宴）中争奇斗艳",
+        "description": "酒宴）中争奇斗艳 - 从游戏设定中获得",
+        "quantity": 1,
+        "value": 0,
+        "addedAt": "2025-10-16T09:28:15.315Z"
+      },
+      {
+        "id": "item_1760606895315_b3ipksa07",
+        "name": "吸引恩客点你“入房”",
+        "description": "吸引恩客点你“入房” - 从游戏设定中获得",
+        "quantity": 1,
+        "value": 0,
+        "addedAt": "2025-10-16T09:28:15.315Z"
+      },
+      {
+        "id": "item_1760606895315_1o1yc97ej",
+        "name": "用尽浑身解数让他",
+        "description": "用尽浑身解数让他 - 从游戏设定中获得",
+        "quantity": 1,
+        "value": 0,
+        "addedAt": "2025-10-16T09:28:15.315Z"
+      },
+      {
+        "id": "item_1760606895315_fx84xw3od",
+        "name": "们成为你的回头客",
+        "description": "们成为你的回头客 - 从游戏设定中获得",
+        "quantity": 1,
+        "value": 0,
+        "addedAt": "2025-10-16T09:28:15.315Z"
+      },
+      {
+        "id": "item_1760606895315_jjl78rkj2",
+        "name": "甚至“金主”。",
+        "description": "甚至“金主”。 - 从游戏设定中获得",
+        "quantity": 1,
+        "value": 0,
+        "addedAt": "2025-10-16T09:28:15.315Z"
+      },
+      {
+        "id": "item_1760606895315_bjrcns40g",
+        "name": "学徒",
+        "description": "学徒 - 从游戏设定中获得",
+        "quantity": 1,
+        "value": 0,
+        "addedAt": "2025-10-16T09:28:15.315Z"
+      },
+      {
+        "id": "item_1760606895315_a3da9reo8",
+        "name": "尚未“梳拢”的学徒。她们是真正的“清倌”",
+        "description": "尚未“梳拢”的学徒。她们是真正的“清倌” - 从游戏设定中获得",
+        "quantity": 1,
+        "value": 0,
+        "addedAt": "2025-10-16T09:28:15.315Z"
+      },
+      {
+        "id": "item_1760606895315_8fl2smzw2",
+        "name": "负责给姐姐们打下手",
+        "description": "负责给姐姐们打下手 - 从游戏设定中获得",
+        "quantity": 1,
+        "value": 0,
+        "addedAt": "2025-10-16T09:28:15.315Z"
+      },
+      {
+        "id": "item_1760606895315_82v6f60eb",
+        "name": "端茶送",
+        "description": "端茶送 - 从游戏设定中获得",
+        "quantity": 1,
+        "value": 0,
+        "addedAt": "2025-10-16T09:28:15.315Z"
+      },
+      {
+        "id": "item_1760606895315_pasqvmqw9",
+        "name": "同时学习技艺和规矩。她们是楼里最底层的存在",
+        "description": "同时学习技艺和规矩。她们是楼里最底层的存在 - 从游戏设定中获得",
+        "quantity": 1,
+        "value": 0,
+        "addedAt": "2025-10-16T09:28:15.315Z"
+      },
+      {
+        "id": "item_1760606895315_qtge9vmnu",
+        "name": "也是最灵通的耳目。",
+        "description": "也是最灵通的耳目。 - 从游戏设定中获得",
+        "quantity": 1,
+        "value": 0,
+        "addedAt": "2025-10-16T09:28:15.315Z"
+      },
+      {
+        "id": "item_1760606895315_9sxd51ki9",
+        "name": "楼内规矩与文化",
+        "description": "楼内规矩与文化 - 从游戏设定中获得",
+        "quantity": 1,
+        "value": 0,
+        "addedAt": "2025-10-16T09:28:15.315Z"
+      },
+      {
+        "id": "item_1760606895315_v1985mims",
+        "name": "中的一件。",
+        "description": "中的一件。 - 从游戏设定中获得",
+        "quantity": 1,
+        "value": 0,
+        "addedAt": "2025-10-16T09:28:15.315Z"
+      },
+      {
+        "id": "item_1760606895315_3kxsrv3kd",
+        "name": "【权臣贵胄",
+        "description": "【权臣贵胄 - 从游戏设定中获得",
+        "quantity": 1,
+        "value": 0,
+        "addedAt": "2025-10-16T09:28:15.315Z"
+      }
+    ],
+    "location": "start",
+    "flags": {},
+    "relationships": {},
+    "achievements": [],
+    "sessionId": "40dd908cc21ec3b8189645e48640f905",
+    "createdAt": "2025-10-16T09:28:15.313Z",
+    "lastUpdated": "2025-10-16T09:28:15.313Z"
+  },
+  "lastUpdated": "2025-10-16T09:28:15.321Z"
+}

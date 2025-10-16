@@ -1,0 +1,125 @@
+{
+  "sessionId": "a3dbd1e358a2ac26528aab16a4613edb",
+  "characterStatus": {
+    "character": {
+      "name": "Player",
+      "level": 1,
+      "health": 100,
+      "maxHealth": 100,
+      "energy": 100,
+      "maxEnergy": 100,
+      "experience": 0,
+      "money": 0
+    },
+    "attributes": {
+      "年龄": 25,
+      "容貌": 0
+    },
+    "inventory": [
+      {
+        "id": "item_1760611455030_988axzt8t",
+        "name": "1.初始设定",
+        "description": "1.初始设定 - 从游戏设定中获得",
+        "quantity": 1,
+        "value": 0,
+        "addedAt": "2025-10-16T10:44:15.030Z"
+      },
+      {
+        "id": "item_1760611455030_ahsz5j5dy",
+        "name": "完整基础属性/当前状态/心境）",
+        "description": "完整基础属性/当前状态/心境） - 从游戏设定中获得",
+        "quantity": 1,
+        "value": 0,
+        "addedAt": "2025-10-16T10:44:15.030Z"
+      },
+      {
+        "id": "item_1760611455030_m8lrs7308",
+        "name": "4.基础设定",
+        "description": "4.基础设定 - 从游戏设定中获得",
+        "quantity": 1,
+        "value": 0,
+        "addedAt": "2025-10-16T10:44:15.030Z"
+      },
+      {
+        "id": "item_1760611455030_c054ryd2g",
+        "name": "2.浦湾新区",
+        "description": "2.浦湾新区 - 从游戏设定中获得",
+        "quantity": 1,
+        "value": 0,
+        "addedAt": "2025-10-16T10:44:15.030Z"
+      },
+      {
+        "id": "item_1760611455030_r7nj32zm2",
+        "name": "5.注意事项",
+        "description": "5.注意事项 - 从游戏设定中获得",
+        "quantity": 1,
+        "value": 0,
+        "addedAt": "2025-10-16T10:44:15.030Z"
+      },
+      {
+        "id": "item_1760611455030_ui0xkbr1b",
+        "name": "（完整显示明细！包括但不限于房产",
+        "description": "（完整显示明细！包括但不限于房产 - 从游戏设定中获得",
+        "quantity": 1,
+        "value": 0,
+        "addedAt": "2025-10-16T10:44:15.030Z"
+      },
+      {
+        "id": "item_1760611455030_2bva7937h",
+        "name": "信托基金",
+        "description": "信托基金 - 从游戏设定中获得",
+        "quantity": 1,
+        "value": 0,
+        "addedAt": "2025-10-16T10:44:15.030Z"
+      },
+      {
+        "id": "item_1760611455030_i5deb5sul",
+        "name": "奢侈品收藏等）/存款/现金/性能力强弱/拥有技能等基础属性。",
+        "description": "奢侈品收藏等）/存款/现金/性能力强弱/拥有技能等基础属性。 - 从游戏设定中获得",
+        "quantity": 1,
+        "value": 0,
+        "addedAt": "2025-10-16T10:44:15.030Z"
+      },
+      {
+        "id": "item_1760611455030_iei9mcrmg",
+        "name": "人物每个月的开销都需要金钱的支持",
+        "description": "人物每个月的开销都需要金钱的支持 - 从游戏设定中获得",
+        "quantity": 1,
+        "value": 0,
+        "addedAt": "2025-10-16T10:44:15.030Z"
+      },
+      {
+        "id": "item_1760611455030_08da8gqjz",
+        "name": "请不要脱离金钱谈理想！每回合显示人物每",
+        "description": "请不要脱离金钱谈理想！每回合显示人物每 - 从游戏设定中获得",
+        "quantity": 1,
+        "value": 0,
+        "addedAt": "2025-10-16T10:44:15.030Z"
+      },
+      {
+        "id": "item_1760611455030_h853h14f0",
+        "name": "个月的支出收入（包括丈夫给予的家用",
+        "description": "个月的支出收入（包括丈夫给予的家用 - 从游戏设定中获得",
+        "quantity": 1,
+        "value": 0,
+        "addedAt": "2025-10-16T10:44:15.030Z"
+      },
+      {
+        "id": "item_1760611455030_ekna42q5f",
+        "name": "个人投资收益等）。",
+        "description": "个人投资收益等）。 - 从游戏设定中获得",
+        "quantity": 1,
+        "value": 0,
+        "addedAt": "2025-10-16T10:44:15.030Z"
+      }
+    ],
+    "location": "start",
+    "flags": {},
+    "relationships": {},
+    "achievements": [],
+    "sessionId": "a3dbd1e358a2ac26528aab16a4613edb",
+    "createdAt": "2025-10-16T10:44:15.028Z",
+    "lastUpdated": "2025-10-16T10:44:15.028Z"
+  },
+  "lastUpdated": "2025-10-16T10:44:15.036Z"
+}

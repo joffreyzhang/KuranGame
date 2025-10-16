@@ -1,0 +1,143 @@
+{
+  "sessionId": "c7d7928f1a04691d84bf80f21ff658b7",
+  "characterStatus": {
+    "character": {
+      "name": "Player",
+      "level": 1,
+      "health": 100,
+      "maxHealth": 100,
+      "energy": 100,
+      "maxEnergy": 100,
+      "experience": 0,
+      "money": 0
+    },
+    "attributes": {
+      "年龄": 20,
+      "国籍/身高/体重/性格容貌（每回合必须显示）": 0,
+      "健康值": 100,
+      "健康": 100
+    },
+    "inventory": [
+      {
+        "id": "item_1760616844456_3taje2yfs",
+        "name": "1.初始设定",
+        "description": "1.初始设定 - 从游戏设定中获得",
+        "quantity": 1,
+        "value": 0,
+        "addedAt": "2025-10-16T12:14:04.456Z"
+      },
+      {
+        "id": "item_1760616844456_tur7gx9db",
+        "name": "【当前区域",
+        "description": "【当前区域 - 从游戏设定中获得",
+        "quantity": 1,
+        "value": 0,
+        "addedAt": "2025-10-16T12:14:04.456Z"
+      },
+      {
+        "id": "item_1760616844456_tvjtl0yf3",
+        "name": "逻辑解析",
+        "description": "逻辑解析 - 从游戏设定中获得",
+        "quantity": 1,
+        "value": 0,
+        "addedAt": "2025-10-16T12:14:04.456Z"
+      },
+      {
+        "id": "item_1760616844456_fza6zvh1n",
+        "name": "“系统”的本质",
+        "description": "“系统”的本质 - 从游戏设定中获得",
+        "quantity": 1,
+        "value": 0,
+        "addedAt": "2025-10-16T12:14:04.456Z"
+      },
+      {
+        "id": "item_1760616844456_34idlm2cy",
+        "name": "5.注意事项",
+        "description": "5.注意事项 - 从游戏设定中获得",
+        "quantity": 1,
+        "value": 0,
+        "addedAt": "2025-10-16T12:14:04.456Z"
+      },
+      {
+        "id": "item_1760616844456_wm546doo6",
+        "name": "（完整显示明细！主要根据其社会阶层影响",
+        "description": "（完整显示明细！主要根据其社会阶层影响 - 从游戏设定中获得",
+        "quantity": 1,
+        "value": 0,
+        "addedAt": "2025-10-16T12:14:04.456Z"
+      },
+      {
+        "id": "item_1760616844456_aaciox92f",
+        "name": "会影响能为你",
+        "description": "会影响能为你 - 从游戏设定中获得",
+        "quantity": 1,
+        "value": 0,
+        "addedAt": "2025-10-16T12:14:04.456Z"
+      },
+      {
+        "id": "item_1760616844456_yn900cwij",
+        "name": "提供的资源）/为你花费（月度）/掌控欲/性能力强弱/特殊癖好/拥有技能等基",
+        "description": "提供的资源）/为你花费（月度）/掌控欲/性能力强弱/特殊癖好/拥有技能等基 - 从游戏设定中获得",
+        "quantity": 1,
+        "value": 0,
+        "addedAt": "2025-10-16T12:14:04.456Z"
+      },
+      {
+        "id": "item_1760616844456_kyyhkrbs5",
+        "name": "础属性。",
+        "description": "础属性。 - 从游戏设定中获得",
+        "quantity": 1,
+        "value": 0,
+        "addedAt": "2025-10-16T12:14:04.456Z"
+      },
+      {
+        "id": "item_1760616844456_pp7szdiy7",
+        "name": "：完整显示明细！",
+        "description": "：完整显示明细！ - 从游戏设定中获得",
+        "quantity": 1,
+        "value": 0,
+        "addedAt": "2025-10-16T12:14:04.456Z"
+      },
+      {
+        "id": "item_1760616844456_eobsximi8",
+        "name": "甚至环境的一部分。如：会模仿你亲人声音的电",
+        "description": "甚至环境的一部分。如：会模仿你亲人声音的电 - 从游戏设定中获得",
+        "quantity": 1,
+        "value": 0,
+        "addedAt": "2025-10-16T12:14:04.456Z"
+      },
+      {
+        "id": "item_1760616844456_2yhc7fcqp",
+        "name": "看似是出口的门其实是怪物的嘴。",
+        "description": "看似是出口的门其实是怪物的嘴。 - 从游戏设定中获得",
+        "quantity": 1,
+        "value": 0,
+        "addedAt": "2025-10-16T12:14:04.456Z"
+      },
+      {
+        "id": "item_1760616844456_8194gon3p",
+        "name": "或解锁与“特殊关系面板”中角色的关键剧情。",
+        "description": "或解锁与“特殊关系面板”中角色的关键剧情。 - 从游戏设定中获得",
+        "quantity": 1,
+        "value": 0,
+        "addedAt": "2025-10-16T12:14:04.456Z"
+      },
+      {
+        "id": "item_1760616844456_d615smg2i",
+        "name": "或解锁与“特殊关系面板”中角色的关键剧情。",
+        "description": "或解锁与“特殊关系面板”中角色的关键剧情。 - 从游戏设定中获得",
+        "quantity": 1,
+        "value": 0,
+        "addedAt": "2025-10-16T12:14:04.456Z"
+      }
+    ],
+    "location": "start",
+    "flags": {},
+    "relationships": {},
+    "achievements": [],
+    "sessionId": "c7d7928f1a04691d84bf80f21ff658b7",
+    "createdAt": "2025-10-16T12:14:04.452Z",
+    "lastUpdated": "2025-10-16T12:14:04.452Z"
+  },
+  "lastUpdated": "2025-10-16T12:14:04.464Z"
+}

@@ -1,0 +1,17 @@
+{
+  "sessionId": "40dd908cc21ec3b8189645e48640f905",
+  "fileId": "4d9ba59d68e5de4c41663eda3ace8ee3",
+  "playerName": "Player",
+  "gameState": {
+    "currentLocation": "start",
+    "inventory": [],
+    "progress": {},
+    "flags": {},
+    "health": 100,
+    "createdAt": "2025-10-16T09:28:15.317Z",
+    "isInitialized": false
+  },
+  "createdAt": "2025-10-16T09:28:15.317Z",
+  "lastUpdated": "2025-10-16T09:28:15.319Z",
+  "isInitialized": false
+}

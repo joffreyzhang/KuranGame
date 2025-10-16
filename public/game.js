@@ -1,7 +1,7 @@
 // API URL - works for both local development and Vercel deployment
 const API_BASE_URL = window.location.hostname === 'localhost'
-  ? 'http://localhost:3000/api'  // Local development
-  : '/api';  // Production (Vercel) - uses relative path
+    ? 'http://localhost:3000/api'  // Local development
+    : '/api';  // Production (Vercel) - uses relative path
 
 let sessionId = null;
 let fileId = null;
@@ -43,7 +43,7 @@ if (!fileId) {
 async function initializeGame() {
     try {
         addMessage('system', 'Creating game session...');
-        
+
         const response = await fetch(`${API_BASE_URL}/game/start`, {
             method: 'POST',
             headers: {
@@ -61,10 +61,10 @@ async function initializeGame() {
             sessionId = data.sessionId;
             addMessage('system', 'Game session created! Click "开始游戏" button to start.');
             removeHint();
-            
+
             // Establish SSE connection immediately after session creation
             connectSSE();
-            
+
             // Load initial character status
             await loadCharacterStatus();
         } else {
@@ -82,7 +82,7 @@ async function loadCharacterStatus() {
     try {
         const response = await fetch(`${API_BASE_URL}/game/status/${sessionId}`);
         const data = await response.json();
-        
+
         if (data.success) {
             updateStatusDisplay(data.status);
         }
@@ -101,13 +101,13 @@ function removeHint() {
 function addMessage(type, text) {
     const messageDiv = document.createElement('div');
     messageDiv.className = `message ${type}`;
-    
+
     if (type === 'system') {
         messageDiv.textContent = text;
     } else {
         const bubble = document.createElement('div');
         bubble.className = 'message-bubble';
-        
+
         // 对游戏消息使用Markdown渲染（如果marked库可用）
         if (type === 'game' && typeof marked !== 'undefined') {
             const markdownHtml = marked.parse(text);
@@ -115,62 +115,62 @@ function addMessage(type, text) {
         } else {
             bubble.textContent = text;
         }
-        
+
         messageDiv.appendChild(bubble);
     }
-    
+
     chatArea.appendChild(messageDiv);
     scrollToBottom();
 }
 
 // Render action buttons below the last game message
 function renderActionButtons(options) {
-  // Remove previous buttons if any
-  const prev = document.getElementById('action-buttons');
-  if (prev) prev.remove();
+    // Remove previous buttons if any
+    const prev = document.getElementById('action-buttons');
+    if (prev) prev.remove();
 
-  const container = document.createElement('div');
-  container.id = 'action-buttons';
-  container.style.margin = '10px 0 20px 0';
+    const container = document.createElement('div');
+    container.id = 'action-buttons';
+    container.style.margin = '10px 0 20px 0';
 
-  const wrap = document.createElement('div');
-  wrap.style.display = 'flex';
-  wrap.style.flexWrap = 'wrap';
-  wrap.style.gap = '10px';
+    const wrap = document.createElement('div');
+    wrap.style.display = 'flex';
+    wrap.style.flexWrap = 'wrap';
+    wrap.style.gap = '10px';
 
-  options.forEach(opt => {
-    const btn = document.createElement('button');
-    btn.textContent = `${opt.index ? opt.index + '. ' : ''}${opt.text}`;
-    btn.style.background = 'linear-gradient(135deg, #20c997 0%, #17a2b8 100%)';
-    btn.style.color = 'white';
-    btn.style.border = 'none';
-    btn.style.padding = '10px 14px';
-    btn.style.borderRadius = '20px';
-    btn.style.cursor = 'pointer';
-    btn.style.fontWeight = '600';
-    btn.onclick = () => {
-      // Send the option value or index as user's action
-      playerInput.value = (opt.value || opt.index || opt.text).toString();
-      sendAction();
-    };
-    wrap.appendChild(btn);
-  });
+    options.forEach(opt => {
+        const btn = document.createElement('button');
+        btn.textContent = `${opt.index ? opt.index + '. ' : ''}${opt.text}`;
+        btn.style.background = 'linear-gradient(135deg, #20c997 0%, #17a2b8 100%)';
+        btn.style.color = 'white';
+        btn.style.border = 'none';
+        btn.style.padding = '10px 14px';
+        btn.style.borderRadius = '20px';
+        btn.style.cursor = 'pointer';
+        btn.style.fontWeight = '600';
+        btn.onclick = () => {
+            // Send the option value or index as user's action
+            playerInput.value = (opt.value || opt.index || opt.text).toString();
+            sendAction();
+        };
+        wrap.appendChild(btn);
+    });
 
-  container.appendChild(wrap);
-  chatArea.appendChild(container);
-  scrollToBottom();
+    container.appendChild(wrap);
+    chatArea.appendChild(container);
+    scrollToBottom();
 }
 
 function addLoadingIndicator() {
     const messageDiv = document.createElement('div');
     messageDiv.className = 'message game';
     messageDiv.id = 'loading-indicator';
-    
+
     const bubble = document.createElement('div');
     bubble.className = 'message-bubble';
     bubble.innerHTML = '<div class="loading"></div>';
     messageDiv.appendChild(bubble);
-    
+
     chatArea.appendChild(messageDiv);
     scrollToBottom();
 }
@@ -205,7 +205,7 @@ async function startGameWithButton() {
 
     // Hide the start button after clicking
     startGameBtn.classList.add('hidden');
-    
+
     // Send the start game command
     playerInput.value = '开始游戏';
     await sendAction();
@@ -213,22 +213,22 @@ async function startGameWithButton() {
 
 async function sendAction() {
     const action = playerInput.value.trim();
-    
+
     if (!action || isProcessing || !sessionId) {
         return;
     }
 
     // Add player message
     addMessage('player', action);
-    
+
     // Clear input
     playerInput.value = '';
-    
+
     // Disable input while processing
     isProcessing = true;
     playerInput.disabled = true;
     sendBtn.disabled = true;
-    
+
     // Show loading indicator
     addLoadingIndicator();
 
@@ -243,13 +243,13 @@ async function sendAction() {
         });
 
         const data = await response.json();
-        
+
         if (!data.success) {
             throw new Error(data.error || 'Failed to send action');
         }
-        
+
         // Note: No longer processing data.response here, as response will come through SSE events
-        
+
     } catch (error) {
         console.error('Error sending action:', error);
         removeLoadingIndicator();
@@ -261,7 +261,7 @@ async function sendAction() {
 // Update status display
 function updateStatusDisplay(status) {
     if (!status) return;
-    
+
     // Update character info
     if (status.character) {
         const char = status.character;
@@ -270,24 +270,24 @@ function updateStatusDisplay(status) {
         document.getElementById('charHealth').textContent = `${char.health || 0}/${char.maxHealth || 100}`;
         document.getElementById('charEnergy').textContent = `${char.energy || 0}/${char.maxEnergy || 100}`;
         document.getElementById('charMoney').textContent = char.money || 0;
-        
+
         // Update health bar
         const healthPercent = (char.health / char.maxHealth) * 100;
         document.getElementById('healthFill').style.width = `${healthPercent}%`;
-        
+
         // Update energy bar
         const energyPercent = (char.energy / char.maxEnergy) * 100;
         document.getElementById('energyFill').style.width = `${energyPercent}%`;
     }
-    
+
     // Update attributes dynamically
     if (status.attributes) {
         const attributeGrid = document.getElementById('attributeGrid');
         const attrs = status.attributes;
-        
+
         // Get attribute keys
         const attrKeys = Object.keys(attrs);
-        
+
         if (attrKeys.length === 0) {
             attributeGrid.innerHTML = '<p style="color: #999; font-size: 0.85em; text-align: center; grid-column: 1 / -1;">No attributes defined</p>';
         } else {
@@ -300,37 +300,58 @@ function updateStatusDisplay(status) {
             `).join('');
         }
     }
-    
+
     // Update inventory
     if (status.inventory) {
         const inventoryList = document.getElementById('inventoryList');
         const inventoryCount = document.getElementById('inventoryCount');
-        
+
         inventoryCount.textContent = status.inventory.length;
-        
+
         if (status.inventory.length === 0) {
-            inventoryList.innerHTML = '<p style="color: #999; font-size: 0.85em; text-align: center;">Empty</p>';
+            inventoryList.innerHTML = '<p style="color: #999; font-size: 0.85em; text-align: center;">空的</p>';
         } else {
             inventoryList.innerHTML = status.inventory.map(item => {
                 const itemId = item.id || item.name || item;
                 const itemName = item.name || item;
                 const quantity = item.quantity > 1 ? ` x${item.quantity}` : '';
-                
+
                 return `
                 <div class="inventory-item" style="display: flex; justify-content: space-between; align-items: center;">
-                    <span>${itemName}${quantity}</span>
-                    <button onclick="useItemFromInventory('${itemId}')" 
-                            style="background: #667eea; color: white; border: none; 
-                                   padding: 3px 8px; border-radius: 10px; cursor: pointer; 
-                                   font-size: 0.75em;">
+                    <span style="flex: 1; min-width: 0; margin-right: 8px;">${itemName}${quantity}</span>
+                    <button onclick="useItemAndCloseSidebar('${itemId}')" 
+                        style="background: #667eea; color: white; border: none; 
+                        padding: 3px 8px; border-radius: 10px; cursor: pointer; 
+                        font-size: 0.75em; width: 50px; flex-shrink: 0;">
                         使用
                     </button>
                 </div>
-                `;
+            `;
             }).join('');
         }
     }
-    
+
+    // Use item and close sidebar (only if sidebar is open on mobile)
+    async function useItemAndCloseSidebar(itemId) {
+        const sidebar = document.getElementById('statusPanel');
+
+        // 只有在移动端且侧边栏处于打开状态时才关闭
+        if (sidebar.classList.contains('active')) {
+            const overlay = document.getElementById('overlay');
+            const menuToggle = document.getElementById('menuToggle');
+
+            sidebar.classList.remove('active');
+            overlay.classList.remove('active');
+            menuToggle.textContent = '☰';
+        }
+
+        // 然后使用物品
+        await useItemFromInventory(itemId);
+    }
+
+    // Make function available globally
+    window.useItemAndCloseSidebar = useItemAndCloseSidebar;
+
     // Update location
     if (status.location) {
         document.getElementById('charLocation').textContent = status.location;
@@ -340,7 +361,7 @@ function updateStatusDisplay(status) {
 // Use item from inventory
 async function useItemFromInventory(itemId) {
     if (!sessionId) return;
-    
+
     try {
         const response = await fetch(`${API_BASE_URL}/game/use-item/${sessionId}`, {
             method: 'POST',
@@ -349,9 +370,9 @@ async function useItemFromInventory(itemId) {
             },
             body: JSON.stringify({ itemId })
         });
-        
+
         const data = await response.json();
-        
+
         if (data.success) {
             addMessage('system', `已使用: ${data.usedItem.name}`);
             updateStatusDisplay(data.status);
@@ -376,16 +397,16 @@ function connectSSE() {
     if (eventSource) {
         eventSource.close();
     }
-    
+
     console.log('🔗 Connecting to SSE stream...');
     eventSource = new EventSource(`${API_BASE_URL}/game/stream/${sessionId}`);
-    
+
     eventSource.onopen = () => {
         isSSEConnected = true;
         updateConnectionStatus(true);
         console.log('✅ SSE connected');
     };
-    
+
     eventSource.onmessage = (event) => {
         try {
             const data = JSON.parse(event.data);
@@ -394,7 +415,7 @@ function connectSSE() {
             console.error('Error parsing SSE data:', error);
         }
     };
-    
+
     eventSource.onerror = (error) => {
         console.error('SSE error:', error);
         isSSEConnected = false;
@@ -408,7 +429,7 @@ function connectSSE() {
 function updateConnectionStatus(connected) {
     const statusIndicator = document.getElementById('statusIndicator');
     const statusText = document.getElementById('statusText');
-    
+
     if (statusIndicator && statusText) {
         if (connected) {
             statusIndicator.textContent = '🟢';
@@ -429,47 +450,47 @@ function handleSSEEvent(data) {
         const timestamp = new Date().toLocaleTimeString();
         console.log(`[${timestamp}] SSE Event:`, data.type, data);
     }
-    
+
     // Collect debug info silently (no console output)
     if (data.type === 'response_chunk') {
         debugInfo.receivedChunks++;
         debugInfo.fullText += data.chunk;
-        
+
         if (data.index === 0) {
             debugInfo.startTime = new Date();
             debugInfo.totalChunks = data.total;
         }
     }
-    
-    switch(data.type) {
+
+    switch (data.type) {
         case 'connected':
             updateConnectionStatus(true);
             break;
-            
+
         case 'action_received':
             // Action received, can show processing status
             console.log('Action received:', data.action);
             break;
-            
+
         case 'processing':
             // Start streaming display and remove loading indicator
             resetDebugInfo();
             removeLoadingIndicator();
             startStreamingMessage();
             break;
-            
+
         case 'response_chunk':
             // Stream text chunks (replaces addMessage('game', data.response))
             appendStreamingText(data.chunk);
             break;
-            
+
         case 'state_update':
             // Update game state (replaces updateStatusDisplay)
             if (data.characterStatus) {
                 updateStatusDisplay(data.characterStatus);
             }
             break;
-            
+
         case 'action_options':
             // Display action options (replaces renderActionButtons)
             if (Array.isArray(data.options) && data.options.length > 0) {
@@ -477,12 +498,12 @@ function handleSSEEvent(data) {
                 renderActionButtons(data.options);
             }
             break;
-            
+
         case 'complete':
             // Complete processing (replaces finally block)
             debugInfo.endTime = new Date();
             const duration = debugInfo.endTime - debugInfo.startTime;
-            
+
             console.log('🎉 Streaming Complete!', {
                 totalChunks: debugInfo.totalChunks,
                 receivedChunks: debugInfo.receivedChunks,
@@ -492,24 +513,24 @@ function handleSSEEvent(data) {
                 hasNewlines: debugInfo.fullText.includes('\n'),
                 newlineCount: (debugInfo.fullText.match(/\n/g) || []).length
             });
-            
+
             finalizeStreamingMessage();
             enableInput();
-            
+
             // Hide start button after game starts
             if (startGameBtn) {
                 startGameBtn.classList.add('hidden');
             }
             removeHint();
             break;
-            
+
         case 'error':
             // Error handling (replaces catch block)
             addErrorMessage(data.error);
             removeLoadingIndicator();
             enableInput();
             break;
-            
+
         default:
             console.warn('Unknown SSE event type:', data.type);
     }
@@ -527,10 +548,10 @@ function startStreamingMessage() {
             <span class="typing-cursor">|</span>
         </div>
     `;
-    
+
     // 添加属性来存储累积的原始文本
     currentStreamingMessage.rawText = '';
-    
+
     chatArea.appendChild(currentStreamingMessage);
     chatArea.scrollTop = chatArea.scrollHeight;
 }
@@ -541,15 +562,15 @@ function startStreamingMessage() {
 function appendStreamingText(chunk) {
     if (currentStreamingMessage) {
         const content = currentStreamingMessage.querySelector('.streaming-content');
-        
+
         // 累积原始文本
         currentStreamingMessage.rawText += chunk;
-        
+
         // 温和的文本清理：只移除回车符，保留Markdown结构所需的换行符
         const processedText = currentStreamingMessage.rawText
             .replace(/[\r]+/g, '') // 移除回车符
             .replace(/ {2,}/g, ' '); // 将多个空格替换为单个空格
-        
+
         if (typeof marked !== 'undefined') {
             // 对累积的完整文本进行一次性Markdown渲染
             const markdownHtml = marked.parse(processedText);
@@ -560,7 +581,7 @@ function appendStreamingText(chunk) {
             const escapedText = escapeHtml(processedText);
             content.innerHTML = escapedText;
         }
-        
+
         chatArea.scrollTop = chatArea.scrollHeight;
     }
 }
@@ -573,7 +594,7 @@ function finalizeStreamingMessage() {
         // Remove typing cursor
         const cursor = currentStreamingMessage.querySelector('.typing-cursor');
         if (cursor) cursor.remove();
-        
+
         // Remove streaming class
         currentStreamingMessage.classList.remove('streaming');
         currentStreamingMessage = null;
@@ -617,7 +638,7 @@ window.sendAction = sendAction;
 window.handleKeyPress = handleKeyPress;
 
 // Wait for DOM and marked library to be ready
-document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener('DOMContentLoaded', function () {
     // Check if marked is available
     if (typeof marked === 'undefined') {
         console.warn('Marked library not loaded, falling back to plain text rendering');
@@ -632,7 +653,7 @@ document.addEventListener('DOMContentLoaded', function() {
             smartypants: false   // 禁用智能引号
         });
     }
-    
+
     // Focus input on load
     if (playerInput) {
         playerInput.focus();

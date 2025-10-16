@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -80,7 +81,8 @@
             color: #333;
         }
 
-        .health-bar, .energy-bar {
+        .health-bar,
+        .energy-bar {
             height: 8px;
             background: #e0e0e0;
             border-radius: 4px;
@@ -169,6 +171,7 @@
                 opacity: 0;
                 transform: translateY(10px);
             }
+
             to {
                 opacity: 1;
                 transform: translateY(0);
@@ -256,8 +259,16 @@
         }
 
         @keyframes blink {
-            0%, 50% { opacity: 1; }
-            51%, 100% { opacity: 0; }
+
+            0%,
+            50% {
+                opacity: 1;
+            }
+
+            51%,
+            100% {
+                opacity: 0;
+            }
         }
 
         .message.streaming .message-bubble {
@@ -346,8 +357,13 @@
         }
 
         @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
+            0% {
+                transform: rotate(0deg);
+            }
+
+            100% {
+                transform: rotate(360deg);
+            }
         }
 
         .hint {
@@ -464,95 +480,162 @@
         /* Inline buttons under options */
         #action-buttons button:hover {
             transform: translateY(-1px);
-            box-shadow: 0 4px 10px rgba(0,0,0,0.08);
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.08);
+        }
+
+        /* 移动端适配 - 767px 及以下 */
+        @media only screen and (max-width: 767px) {
+
+            .game-container {
+                grid-template-columns: 1fr;
+                grid-template-rows: auto 1fr auto;
+                height: auto;
+                min-height: 100vh;
+            }
+
+            .status-panel {
+                display: none;
+            }
+
+            .game-header {
+                padding: 15px 20px;
+                flex-direction: column;
+                gap: 10px;
+                text-align: center;
+            }
+
+            .game-title {
+                font-size: 1.3rem;
+            }
+
+            .back-btn {
+                align-self: center;
+            }
+
+            .chat-area {
+                padding: 20px;
+                min-height: 50vh;
+            }
+
+            .input-area {
+                grid-column: 1;
+                padding: 15px 20px;
+                flex-direction: column;
+                gap: 10px;
+            }
+
+            .start-game-btn {
+                width: 100%;
+                margin-right: 0;
+                padding: 14px;
+            }
+
+            .input-field {
+                width: 100%;
+                padding: 14px 20px;
+                font-size: 16px;
+                /* 防止iOS缩放 */
+            }
+
+            .send-btn {
+                width: 100%;
+                padding: 14px;
+            }
+
+            .message.player .message-bubble,
+            .message.game .message-bubble {
+                max-width: 90%;
+            }
+
+            .hint {
+                margin: 10px 0;
+                padding: 15px;
+                font-size: 0.9rem;
+            }
         }
     </style>
 </head>
+
 <body>
     <div class="game-container">
         <div class="game-header">
-            <div class="game-title">🎮 Interactive Fiction Game</div>
-            <button class="back-btn" onclick="window.location.href='index.html'">← Back to Upload</button>
+            <div class="game-title">🎮 互动小说游戏</div>
+            <button class="back-btn" onclick="window.location.href='index.html'">← 返回上传页面</button>
         </div>
 
-        <!-- Status Panel -->
+        <!-- 状态面板 -->
         <div class="status-panel" id="statusPanel">
-            <!-- Connection Status -->
+            <!-- 连接状态 -->
             <div class="status-section">
-                <h3>🔗 Connection</h3>
+                <h3>🔗 连接状态</h3>
                 <div class="connection-status">
                     <span id="statusIndicator">⚫</span>
-                    <span id="statusText">Disconnected</span>
+                    <span id="statusText">未连接</span>
                 </div>
             </div>
-            
+
             <div class="status-section">
-                <h3>📊 Character</h3>
+                <h3>📊 角色信息</h3>
                 <div class="status-item">
-                    <span class="status-label">Name:</span>
-                    <span class="status-value" id="charName">Player</span>
+                    <span class="status-label">姓名:</span>
+                    <span class="status-value" id="charName">玩家</span>
                 </div>
                 <div class="status-item">
-                    <span class="status-label">Level:</span>
+                    <span class="status-label">等级:</span>
                     <span class="status-value" id="charLevel">1</span>
                 </div>
                 <div class="status-item">
-                    <span class="status-label">Health:</span>
+                    <span class="status-label">生命值:</span>
                     <span class="status-value" id="charHealth">100/100</span>
                 </div>
                 <div class="health-bar">
                     <div class="health-fill" id="healthFill" style="width: 100%"></div>
                 </div>
                 <div class="status-item">
-                    <span class="status-label">Energy:</span>
+                    <span class="status-label">能量:</span>
                     <span class="status-value" id="charEnergy">100/100</span>
                 </div>
                 <div class="energy-bar">
                     <div class="energy-fill" id="energyFill" style="width: 100%"></div>
                 </div>
                 <div class="status-item">
-                    <span class="status-label">Money:</span>
+                    <span class="status-label">金钱:</span>
                     <span class="status-value" id="charMoney">0</span>
                 </div>
             </div>
 
             <div class="status-section">
-                <h3>⚡ Attributes</h3>
+                <h3>⚡ 属性</h3>
                 <div class="attribute-grid" id="attributeGrid">
-                    <!-- Attributes will be dynamically loaded from PDF -->
-                    <p style="color: #999; font-size: 0.85em; text-align: center;">Loading...</p>
+                    <!-- 属性将从PDF动态加载 -->
+                    <p style="color: #999; font-size: 0.85em; text-align: center;">加载中...</p>
                 </div>
             </div>
 
             <div class="status-section">
-                <h3>🎒 Inventory (<span id="inventoryCount">0</span>)</h3>
+                <h3>🎒 背包 (<span id="inventoryCount">0</span>)</h3>
                 <div id="inventoryList">
-                    <p style="color: #999; font-size: 0.85em; text-align: center;">Empty</p>
+                    <p style="color: #999; font-size: 0.85em; text-align: center;">空的</p>
                 </div>
             </div>
 
             <div class="status-section">
-                <h3>📍 Location</h3>
-                <div style="color: #333; font-weight: 600;" id="charLocation">Start</div>
+                <h3>📍 当前位置</h3>
+                <div style="color: #333; font-weight: 600;" id="charLocation">起始点</div>
             </div>
         </div>
 
         <div class="chat-area" id="chatArea">
             <div class="hint">
-                Welcome! Type <strong>"start game"</strong> or <strong>"开始游戏"</strong> to begin your adventure.
+                欢迎！输入 <strong>"开始游戏"</strong> 或 <strong>"start game"</strong> 开始你的冒险。
             </div>
         </div>
 
         <div class="input-area">
             <button class="start-game-btn" id="startGameBtn" onclick="startGameWithButton()">🎮 开始游戏</button>
-            <input 
-                type="text" 
-                class="input-field" 
-                id="playerInput" 
-                placeholder="Enter your action here..."
-                onkeypress="handleKeyPress(event)"
-            />
-            <button class="send-btn" id="sendBtn" onclick="sendAction()">Send</button>
+            <input type="text" class="input-field" id="playerInput" placeholder="在这里输入你的行动..."
+                onkeypress="handleKeyPress(event)" />
+            <button class="send-btn" id="sendBtn" onclick="sendAction()">发送</button>
         </div>
     </div>
 
@@ -560,5 +643,5 @@
     <script src="https://cdn.jsdelivr.net/npm/marked@9.1.6/marked.min.js"></script>
     <script src="game.js"></script>
 </body>
-</html>
 
+</html>

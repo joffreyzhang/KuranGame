@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -268,38 +269,103 @@
         .pdf-item-process:hover {
             opacity: 0.9;
         }
+        
+
+        @media only screen and (max-width: 767px) {
+
+            .container{
+                padding: 30px;
+            }
+            /* 标题部分适配 */
+            h1 {
+                text-align: center;
+                font-size: 1.6rem;
+                margin-bottom: 8px;
+            }
+
+            .subtitle {
+                text-align: center;
+                font-size: 0.9rem;
+                margin-bottom: 25px;
+            }
+
+            /* Tab按钮适配 */
+            .tab-btn {
+                padding: 14px 8px;
+                font-size: 0.85rem;
+                min-height: 48px;
+                flex: 1;
+            }
+
+            .pdf-item {
+                flex-direction: row;
+                /* 保持水平布局 */
+                align-items: center;
+                gap: 15px;
+                padding: 14px;
+            }
+
+            .pdf-item-info {
+                flex: 1;
+                text-align: left;
+                /* 恢复左对齐 */
+            }
+
+            .pdf-item-name {
+                font-size: 0.95rem;
+                margin-bottom: 4px;
+            }
+
+            .pdf-item-meta {
+                font-size: 0.8rem;
+            }
+
+            .pdf-item-process {
+                padding: 8px 16px;
+                font-size: 0.85rem;
+                min-height: auto;
+                /* 移除固定高度 */
+                border-radius: 16px;
+                white-space: nowrap;
+                /* 防止文字换行 */
+                flex-shrink: 0;
+                /* 防止按钮被压缩 */
+            }
+
+        }
     </style>
 </head>
+
 <body>
     <div class="container">
-        <h1>📚 Interactive Fiction</h1>
-        <p class="subtitle">Upload a PDF or select from existing files</p>
+        <h1>📚 互动小说</h1>
+        <p class="subtitle">上传PDF文件或从现有文件中选择</p>
 
         <!-- Tab Selection -->
         <div style="display: flex; gap: 10px; margin-bottom: 20px;">
-            <button class="tab-btn active" id="uploadTab" onclick="switchTab('upload')">📤 Upload PDF</button>
-            <button class="tab-btn" id="selectTab" onclick="switchTab('select')">📁 Select from pdf_data</button>
+            <button class="tab-btn active" id="uploadTab" onclick="switchTab('upload')">📤 上传PDF</button>
+            <button class="tab-btn" id="selectTab" onclick="switchTab('select')">📁 从pdf_data选择</button>
         </div>
 
         <!-- Upload Section -->
         <div id="uploadSection">
             <div class="upload-area" id="uploadArea">
                 <div class="upload-icon">📄</div>
-                <p><strong>Click to upload</strong> or drag and drop</p>
-                <p style="font-size: 0.9em; color: #999; margin-top: 10px;">PDF files only (Max 10MB)</p>
+                <p><strong>点击上传</strong> 或拖拽文件到此处</p>
+                <p style="font-size: 0.9em; color: #999; margin-top: 10px;">仅支持PDF文件 (最大10MB)</p>
             </div>
 
             <input type="file" id="fileInput" accept=".pdf" />
 
             <div class="file-info" id="fileInfo"></div>
 
-            <button class="btn" id="uploadBtn" style="display: none;">Upload & Process</button>
+            <button class="btn" id="uploadBtn" style="display: none;">上传并处理</button>
         </div>
 
         <!-- Select Section -->
         <div id="selectSection" style="display: none;">
             <div id="pdfList" class="pdf-list">
-                <p style="text-align: center; color: #999;">Loading PDF files...</p>
+                <p style="text-align: center; color: #999;">正在加载PDF文件...</p>
             </div>
         </div>
 
@@ -307,17 +373,17 @@
             <div class="progress-bar">
                 <div class="progress-fill" id="progressFill">0%</div>
             </div>
-            <div class="progress-status" id="progressStatus">Initializing...</div>
+            <div class="progress-status" id="progressStatus">初始化中...</div>
             <div class="log-container" id="logContainer"></div>
         </div>
 
         <div class="result-container" id="resultContainer">
-            <div class="result-title">✅ Processing Complete!</div>
+            <div class="result-title">✅ 处理完成！</div>
             <div class="game-settings" id="gameSettings"></div>
         </div>
     </div>
 
     <script src="app.js"></script>
 </body>
-</html>
 
+</html>

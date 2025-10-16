@@ -250,7 +250,7 @@ function displayResults(data) {
                            color: white; border: none; padding: 15px 40px; 
                            border-radius: 25px; cursor: pointer; font-size: 1.1em;
                            font-weight: 600; transition: transform 0.2s;">
-                🎮 Start Game with Claude
+                🎮 使用Claude开始游戏
             </button>
         </div>`;
     }

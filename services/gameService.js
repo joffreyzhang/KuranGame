@@ -732,17 +732,21 @@ ${statusPrompt}
 
 请用中文回复，语言要生动有趣。`;
 
+    // Build conversation history for Claude (same as original implementation)
+    const messages = [...session.conversationHistory];
+    
+    // Add current action
+    messages.push({
+      role: 'user',
+      content: action
+    });
+
     // 使用流式模式
     const stream = await anthropic.messages.create({
       model: 'deepseek-chat',
       max_tokens: 10000,
       system: systemPrompt,
-      messages: [
-        {
-          role: 'user',
-          content: action
-        }
-      ],
+      messages: messages,
       stream: true  // 启用流式模式
     });
 
@@ -759,6 +763,21 @@ ${statusPrompt}
     const response = {
       message: fullResponse
     };
+    
+    // Update conversation history (same as original implementation)
+    session.conversationHistory.push({
+      role: 'user',
+      content: action
+    });
+    session.conversationHistory.push({
+      role: 'assistant',
+      content: response.message
+    });
+
+    // Keep conversation history manageable (last 20 messages)
+    if (session.conversationHistory.length > 20) {
+      session.conversationHistory = session.conversationHistory.slice(-20);
+    }
     
     // Update game state based on action
     updateGameState(session, action, response);

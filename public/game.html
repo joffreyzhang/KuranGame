@@ -205,7 +205,10 @@
             max-width: 85%;
             box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
             border-left: 4px solid #667eea;
-            white-space: pre-wrap;
+            white-space: normal;
+            word-wrap: break-word;
+            word-break: keep-all;
+            overflow-wrap: break-word;
         }
 
         /* Connection Status Styles */
@@ -235,6 +238,15 @@
             font-family: 'Segoe UI', sans-serif;
             line-height: 1.6;
             color: #333;
+            white-space: normal;
+            word-wrap: break-word;
+        }
+
+        .streaming-content {
+            white-space: normal;
+            word-wrap: break-word;
+            word-break: keep-all;
+            overflow-wrap: break-word;
         }
 
         .typing-cursor {
@@ -360,6 +372,95 @@
             border-left: 4px solid #f5c6cb;
         }
 
+        /* Markdown样式增强 */
+        .message.game .message-bubble h1,
+        .message.game .message-bubble h2,
+        .message.game .message-bubble h3 {
+            color: #667eea;
+            margin: 10px 0 5px 0;
+            border-bottom: 1px solid #e0e0e0;
+            padding-bottom: 5px;
+        }
+
+        .message.game .message-bubble h1 { font-size: 1.3em; }
+        .message.game .message-bubble h2 { font-size: 1.2em; }
+        .message.game .message-bubble h3 { font-size: 1.1em; }
+
+        .message.game .message-bubble strong {
+            color: #667eea;
+            font-weight: 600;
+        }
+
+        .message.game .message-bubble em {
+            color: #764ba2;
+            font-style: italic;
+        }
+
+        .message.game .message-bubble ul,
+        .message.game .message-bubble ol {
+            margin: 10px 0;
+            padding-left: 20px;
+        }
+
+        .message.game .message-bubble li {
+            margin: 5px 0;
+        }
+
+        .message.game .message-bubble blockquote {
+            border-left: 4px solid #667eea;
+            margin: 10px 0;
+            padding-left: 15px;
+            color: #666;
+            font-style: italic;
+        }
+
+        .message.game .message-bubble code {
+            background: #f8f9fa;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-family: 'Courier New', monospace;
+            color: #e74c3c;
+        }
+
+        .message.game .message-bubble pre {
+            background: #f8f9fa;
+            padding: 10px;
+            border-radius: 5px;
+            overflow-x: auto;
+            margin: 10px 0;
+        }
+
+        .message.game .message-bubble pre code {
+            background: none;
+            padding: 0;
+            color: #333;
+        }
+
+        .message.game .message-bubble table {
+            border-collapse: collapse;
+            width: 100%;
+            margin: 10px 0;
+        }
+
+        .message.game .message-bubble th,
+        .message.game .message-bubble td {
+            border: 1px solid #e0e0e0;
+            padding: 8px 12px;
+            text-align: left;
+        }
+
+        .message.game .message-bubble th {
+            background: #f8f9fa;
+            font-weight: 600;
+            color: #667eea;
+        }
+
+        .message.game .message-bubble hr {
+            border: none;
+            border-top: 2px solid #e0e0e0;
+            margin: 15px 0;
+        }
+
         /* Inline buttons under options */
         #action-buttons button:hover {
             transform: translateY(-1px);
@@ -455,6 +556,8 @@
         </div>
     </div>
 
+    <!-- Markdown渲染库 -->
+    <script src="https://cdn.jsdelivr.net/npm/marked@9.1.6/marked.min.js"></script>
     <script src="game.js"></script>
 </body>
 </html>

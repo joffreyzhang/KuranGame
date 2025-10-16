@@ -107,7 +107,15 @@ function addMessage(type, text) {
     } else {
         const bubble = document.createElement('div');
         bubble.className = 'message-bubble';
-        bubble.textContent = text;
+        
+        // 对游戏消息使用Markdown渲染（如果marked库可用）
+        if (type === 'game' && typeof marked !== 'undefined') {
+            const markdownHtml = marked.parse(text);
+            bubble.innerHTML = markdownHtml;
+        } else {
+            bubble.textContent = text;
+        }
+        
         messageDiv.appendChild(bubble);
     }
     
@@ -514,13 +522,14 @@ function startStreamingMessage() {
     currentStreamingMessage = document.createElement('div');
     currentStreamingMessage.className = 'message game streaming';
     currentStreamingMessage.innerHTML = `
-        <div class="bubble">
-            <div class="streaming-text">
-                <span class="streaming-content"></span>
-                <span class="typing-cursor">|</span>
-            </div>
+        <div class="message-bubble">
+            <span class="streaming-content"></span>
+            <span class="typing-cursor">|</span>
         </div>
     `;
+    
+    // 添加属性来存储累积的原始文本
+    currentStreamingMessage.rawText = '';
     
     chatArea.appendChild(currentStreamingMessage);
     chatArea.scrollTop = chatArea.scrollHeight;
@@ -533,11 +542,25 @@ function appendStreamingText(chunk) {
     if (currentStreamingMessage) {
         const content = currentStreamingMessage.querySelector('.streaming-content');
         
-        // Escape HTML to prevent XSS, then convert newlines to <br>
-        const escapedChunk = escapeHtml(chunk);
-        const formattedChunk = escapedChunk.replace(/\n/g, '<br>');
+        // 累积原始文本
+        currentStreamingMessage.rawText += chunk;
         
-        content.innerHTML += formattedChunk;
+        // 温和的文本清理：只移除回车符，保留Markdown结构所需的换行符
+        const processedText = currentStreamingMessage.rawText
+            .replace(/[\r]+/g, '') // 移除回车符
+            .replace(/ {2,}/g, ' '); // 将多个空格替换为单个空格
+        
+        if (typeof marked !== 'undefined') {
+            // 对累积的完整文本进行一次性Markdown渲染
+            const markdownHtml = marked.parse(processedText);
+            // 替换而不是追加内容
+            content.innerHTML = markdownHtml;
+        } else {
+            // 降级处理：转义HTML
+            const escapedText = escapeHtml(processedText);
+            content.innerHTML = escapedText;
+        }
+        
         chatArea.scrollTop = chatArea.scrollHeight;
     }
 }
@@ -588,7 +611,32 @@ function resetDebugInfo() {
     };
 }
 
-// Focus input on load
-playerInput.focus();
+// Make functions available globally
+window.startGameWithButton = startGameWithButton;
+window.sendAction = sendAction;
+window.handleKeyPress = handleKeyPress;
+
+// Wait for DOM and marked library to be ready
+document.addEventListener('DOMContentLoaded', function() {
+    // Check if marked is available
+    if (typeof marked === 'undefined') {
+        console.warn('Marked library not loaded, falling back to plain text rendering');
+    } else {
+        // 配置marked选项，禁用可能导致换行的功能
+        marked.setOptions({
+            breaks: false,        // 禁用单行换行符转换为<br>
+            gfm: true,           // 启用GitHub风格Markdown
+            pedantic: false,     // 禁用严格模式
+            sanitize: false,     // 不禁用HTML（我们手动转义）
+            smartLists: true,    // 启用智能列表
+            smartypants: false   // 禁用智能引号
+        });
+    }
+    
+    // Focus input on load
+    if (playerInput) {
+        playerInput.focus();
+    }
+});
 
 

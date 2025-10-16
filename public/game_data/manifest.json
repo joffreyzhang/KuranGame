@@ -1,279 +1,39 @@
 {
   "version": "1.0",
-  "generatedAt": "2025-10-16T07:50:45.650Z",
-  "totalSessions": 17,
+  "generatedAt": "2025-10-16T10:14:15.898Z",
+  "totalSessions": 2,
   "sessions": [
     {
-      "sessionId": "78a399def7e7204152c016b934307e86",
+      "sessionId": "bc6a03beccbcf73396291b179637156b",
       "playerName": "Player",
-      "fileId": "06a793228526a7d8c64622f71f5d0db0",
-      "createdAt": "2025-10-16T07:50:21.120Z",
-      "lastUpdated": "2025-10-16T07:50:45.647Z",
+      "fileId": "9e770383a96c6b2f3c59265effa10be3",
+      "createdAt": "2025-10-16T10:13:48.312Z",
+      "lastUpdated": "2025-10-16T10:14:15.897Z",
       "isInitialized": false,
       "files": {
-        "session": "session_78a399def7e7204152c016b934307e86.json",
-        "status": "status_78a399def7e7204152c016b934307e86.json",
-        "history": "history_78a399def7e7204152c016b934307e86.json",
-        "latest": "latest_78a399def7e7204152c016b934307e86.json"
+        "session": "session_bc6a03beccbcf73396291b179637156b.json",
+        "status": "status_bc6a03beccbcf73396291b179637156b.json",
+        "history": "history_bc6a03beccbcf73396291b179637156b.json",
+        "latest": "latest_bc6a03beccbcf73396291b179637156b.json"
       },
-      "displayName": "Player - 2025/10/16 15:50:45",
-      "shortId": "78a399de"
+      "displayName": "Player - 2025/10/16 18:14:15",
+      "shortId": "bc6a03be"
     },
     {
-      "sessionId": "5a192bd17318ecb5b8b3770647d0600b",
+      "sessionId": "ca17332ca52ef149a4e8ad0bfbcd8b70",
       "playerName": "Player",
-      "fileId": "f9acf1cca6916a6d3260e1bd01d9c44a",
-      "createdAt": "2025-10-16T07:45:49.915Z",
-      "lastUpdated": "2025-10-16T07:46:12.039Z",
+      "fileId": "0782a2a2def24aa1578b3bfbf96f5582",
+      "createdAt": "2025-10-16T10:00:37.128Z",
+      "lastUpdated": "2025-10-16T10:01:48.609Z",
       "isInitialized": false,
       "files": {
-        "session": "session_5a192bd17318ecb5b8b3770647d0600b.json",
-        "status": "status_5a192bd17318ecb5b8b3770647d0600b.json",
-        "history": "history_5a192bd17318ecb5b8b3770647d0600b.json",
-        "latest": "latest_5a192bd17318ecb5b8b3770647d0600b.json"
+        "session": "session_ca17332ca52ef149a4e8ad0bfbcd8b70.json",
+        "status": "status_ca17332ca52ef149a4e8ad0bfbcd8b70.json",
+        "history": "history_ca17332ca52ef149a4e8ad0bfbcd8b70.json",
+        "latest": "latest_ca17332ca52ef149a4e8ad0bfbcd8b70.json"
       },
-      "displayName": "Player - 2025/10/16 15:46:12",
-      "shortId": "5a192bd1"
-    },
-    {
-      "sessionId": "f10cdc466ec90a31ca80c53a2c1b3490",
-      "playerName": "Player",
-      "fileId": "5ba3ee304b8228bca663bb1fa2b0fb5c",
-      "createdAt": "2025-10-16T07:39:46.046Z",
-      "lastUpdated": "2025-10-16T07:39:46.048Z",
-      "isInitialized": false,
-      "files": {
-        "session": "session_f10cdc466ec90a31ca80c53a2c1b3490.json",
-        "status": "status_f10cdc466ec90a31ca80c53a2c1b3490.json",
-        "history": "history_f10cdc466ec90a31ca80c53a2c1b3490.json",
-        "latest": "latest_f10cdc466ec90a31ca80c53a2c1b3490.json"
-      },
-      "displayName": "Player - 2025/10/16 15:39:46",
-      "shortId": "f10cdc46"
-    },
-    {
-      "sessionId": "62c3aa28df09564022061850a4facd11",
-      "playerName": "Player",
-      "fileId": "09bf53c89611cee4bccbf39745feeea3",
-      "createdAt": "2025-10-16T07:28:32.001Z",
-      "lastUpdated": "2025-10-16T07:29:43.329Z",
-      "isInitialized": false,
-      "files": {
-        "session": "session_62c3aa28df09564022061850a4facd11.json",
-        "status": "status_62c3aa28df09564022061850a4facd11.json",
-        "history": "history_62c3aa28df09564022061850a4facd11.json",
-        "latest": "latest_62c3aa28df09564022061850a4facd11.json"
-      },
-      "displayName": "Player - 2025/10/16 15:29:43",
-      "shortId": "62c3aa28"
-    },
-    {
-      "sessionId": "5fe9ba6f58a9384a994b61935fbd636b",
-      "playerName": "Player",
-      "fileId": "37e456603a59f8363472b521d7872c23",
-      "createdAt": "2025-10-16T07:26:23.026Z",
-      "lastUpdated": "2025-10-16T07:26:23.030Z",
-      "isInitialized": false,
-      "files": {
-        "session": "session_5fe9ba6f58a9384a994b61935fbd636b.json",
-        "status": "status_5fe9ba6f58a9384a994b61935fbd636b.json",
-        "history": "history_5fe9ba6f58a9384a994b61935fbd636b.json",
-        "latest": "latest_5fe9ba6f58a9384a994b61935fbd636b.json"
-      },
-      "displayName": "Player - 2025/10/16 15:26:23",
-      "shortId": "5fe9ba6f"
-    },
-    {
-      "sessionId": "25c0a99ec01d70f0b71c345e2c8e6e78",
-      "playerName": "Player",
-      "fileId": "fd8850864fe06152ad331a9bf4cd7d20",
-      "createdAt": "2025-10-16T07:11:08.259Z",
-      "lastUpdated": "2025-10-16T07:11:08.262Z",
-      "isInitialized": false,
-      "files": {
-        "session": "session_25c0a99ec01d70f0b71c345e2c8e6e78.json",
-        "status": "status_25c0a99ec01d70f0b71c345e2c8e6e78.json",
-        "history": "history_25c0a99ec01d70f0b71c345e2c8e6e78.json",
-        "latest": "latest_25c0a99ec01d70f0b71c345e2c8e6e78.json"
-      },
-      "displayName": "Player - 2025/10/16 15:11:08",
-      "shortId": "25c0a99e"
-    },
-    {
-      "sessionId": "63e98214862246699d86a90293e967b3",
-      "playerName": "Player",
-      "fileId": "ae6e86c81798cfa6186c2c923c4741c4",
-      "createdAt": "2025-10-16T06:02:12.786Z",
-      "lastUpdated": "2025-10-16T06:04:47.320Z",
-      "isInitialized": false,
-      "files": {
-        "session": "session_63e98214862246699d86a90293e967b3.json",
-        "status": "status_63e98214862246699d86a90293e967b3.json",
-        "history": "history_63e98214862246699d86a90293e967b3.json",
-        "latest": "latest_63e98214862246699d86a90293e967b3.json"
-      },
-      "displayName": "Player - 2025/10/16 14:04:47",
-      "shortId": "63e98214"
-    },
-    {
-      "sessionId": "abeadeaf17b560c8cf408be84c31e681",
-      "playerName": "Player",
-      "fileId": "292af5fa2ed6519cb2de369b36fc4756",
-      "createdAt": "2025-10-16T05:53:32.198Z",
-      "lastUpdated": "2025-10-16T06:01:38.633Z",
-      "isInitialized": false,
-      "files": {
-        "session": "session_abeadeaf17b560c8cf408be84c31e681.json",
-        "status": "status_abeadeaf17b560c8cf408be84c31e681.json",
-        "history": "history_abeadeaf17b560c8cf408be84c31e681.json",
-        "latest": "latest_abeadeaf17b560c8cf408be84c31e681.json"
-      },
-      "displayName": "Player - 2025/10/16 14:01:38",
-      "shortId": "abeadeaf"
-    },
-    {
-      "sessionId": "d813fde7b0c4d0ca8d31dce8557cebfc",
-      "playerName": "Player",
-      "fileId": "123fd5500a0faf989e3261debfcedb01",
-      "createdAt": "2025-10-16T06:01:30.001Z",
-      "lastUpdated": "2025-10-16T06:01:30.002Z",
-      "isInitialized": false,
-      "files": {
-        "session": "session_d813fde7b0c4d0ca8d31dce8557cebfc.json",
-        "status": "status_d813fde7b0c4d0ca8d31dce8557cebfc.json",
-        "history": "history_d813fde7b0c4d0ca8d31dce8557cebfc.json",
-        "latest": "latest_d813fde7b0c4d0ca8d31dce8557cebfc.json"
-      },
-      "displayName": "Player - 2025/10/16 14:01:30",
-      "shortId": "d813fde7"
-    },
-    {
-      "sessionId": "6b56c2f3f6c776ab86def7dd898b525b",
-      "playerName": "Player",
-      "fileId": "7851441037d1f9fd9ab151883b48e2d7",
-      "createdAt": "2025-10-16T05:50:42.476Z",
-      "lastUpdated": "2025-10-16T05:51:54.469Z",
-      "isInitialized": false,
-      "files": {
-        "session": "session_6b56c2f3f6c776ab86def7dd898b525b.json",
-        "status": "status_6b56c2f3f6c776ab86def7dd898b525b.json",
-        "history": "history_6b56c2f3f6c776ab86def7dd898b525b.json",
-        "latest": "latest_6b56c2f3f6c776ab86def7dd898b525b.json"
-      },
-      "displayName": "Player - 2025/10/16 13:51:54",
-      "shortId": "6b56c2f3"
-    },
-    {
-      "sessionId": "078812aca2849f3efcf44a306860eb16",
-      "playerName": "Player",
-      "fileId": "3bfe0b5b12c11c2fb770d3355a189b21",
-      "createdAt": "2025-10-16T05:40:35.180Z",
-      "lastUpdated": "2025-10-16T05:41:08.931Z",
-      "isInitialized": false,
-      "files": {
-        "session": "session_078812aca2849f3efcf44a306860eb16.json",
-        "status": "status_078812aca2849f3efcf44a306860eb16.json",
-        "history": "history_078812aca2849f3efcf44a306860eb16.json",
-        "latest": "latest_078812aca2849f3efcf44a306860eb16.json"
-      },
-      "displayName": "Player - 2025/10/16 13:41:08",
-      "shortId": "078812ac"
-    },
-    {
-      "sessionId": "0e07316dc48800b09acbd8524c92261b",
-      "playerName": "Player",
-      "fileId": "059c78b31cde11b6d073f5fcdbb4e734",
-      "createdAt": "2025-10-16T05:34:14.071Z",
-      "lastUpdated": "2025-10-16T05:36:08.117Z",
-      "isInitialized": false,
-      "files": {
-        "session": "session_0e07316dc48800b09acbd8524c92261b.json",
-        "status": "status_0e07316dc48800b09acbd8524c92261b.json",
-        "history": "history_0e07316dc48800b09acbd8524c92261b.json",
-        "latest": "latest_0e07316dc48800b09acbd8524c92261b.json"
-      },
-      "displayName": "Player - 2025/10/16 13:36:08",
-      "shortId": "0e07316d"
-    },
-    {
-      "sessionId": "673c10bba758bbb618855659680909ce",
-      "playerName": "Player",
-      "fileId": "0d92c2d8b47cdddd7cd03614c57725e9",
-      "createdAt": "2025-10-16T05:04:32.019Z",
-      "lastUpdated": "2025-10-16T05:17:38.865Z",
-      "isInitialized": true,
-      "files": {
-        "session": "session_673c10bba758bbb618855659680909ce.json",
-        "status": "status_673c10bba758bbb618855659680909ce.json",
-        "history": "history_673c10bba758bbb618855659680909ce.json",
-        "latest": "latest_673c10bba758bbb618855659680909ce.json"
-      },
-      "displayName": "Player - 2025/10/16 13:17:38",
-      "shortId": "673c10bb"
-    },
-    {
-      "sessionId": "e69e54eb50b82879b1005cdc780f02fd",
-      "playerName": "Player",
-      "fileId": "cadbe2b63c2030d04687608e4f389ebe",
-      "createdAt": "2025-10-15T09:06:43.547Z",
-      "lastUpdated": "2025-10-15T09:14:48.634Z",
-      "isInitialized": true,
-      "files": {
-        "session": "session_e69e54eb50b82879b1005cdc780f02fd.json",
-        "status": "status_e69e54eb50b82879b1005cdc780f02fd.json",
-        "history": "history_e69e54eb50b82879b1005cdc780f02fd.json",
-        "latest": "latest_e69e54eb50b82879b1005cdc780f02fd.json"
-      },
-      "displayName": "Player - 2025/10/15 17:14:48",
-      "shortId": "e69e54eb"
-    },
-    {
-      "sessionId": "403d033d3a3d6047b369b874c7701d5a",
-      "playerName": "Player",
-      "fileId": "1759eef47909afba3cc07ac429c1fd61",
-      "createdAt": "2025-10-15T07:22:17.841Z",
-      "lastUpdated": "2025-10-15T07:39:18.268Z",
-      "isInitialized": true,
-      "files": {
-        "session": "session_403d033d3a3d6047b369b874c7701d5a.json",
-        "status": "status_403d033d3a3d6047b369b874c7701d5a.json",
-        "history": "history_403d033d3a3d6047b369b874c7701d5a.json",
-        "latest": "latest_403d033d3a3d6047b369b874c7701d5a.json"
-      },
-      "displayName": "Player - 2025/10/15 15:39:18",
-      "shortId": "403d033d"
-    },
-    {
-      "sessionId": "28133e1782053dd4bf62e1b2a0adee4a",
-      "playerName": "Player",
-      "fileId": "14fad760f26f8c49c0a19ec393e8df6e",
-      "createdAt": "2025-10-15T06:57:28.221Z",
-      "lastUpdated": "2025-10-15T07:12:46.425Z",
-      "isInitialized": true,
-      "files": {
-        "session": "session_28133e1782053dd4bf62e1b2a0adee4a.json",
-        "status": "status_28133e1782053dd4bf62e1b2a0adee4a.json",
-        "history": "history_28133e1782053dd4bf62e1b2a0adee4a.json",
-        "latest": "latest_28133e1782053dd4bf62e1b2a0adee4a.json"
-      },
-      "displayName": "Player - 2025/10/15 15:12:46",
-      "shortId": "28133e17"
-    },
-    {
-      "sessionId": "6abe0fd1e71948d92df135f4af01f09d",
-      "playerName": "Player",
-      "fileId": "fe9aa0a2ffa568d4f7c91895d187d957",
-      "createdAt": "2025-10-15T03:12:23.427Z",
-      "lastUpdated": "2025-10-15T03:20:54.396Z",
-      "isInitialized": true,
-      "files": {
-        "session": "session_6abe0fd1e71948d92df135f4af01f09d.json",
-        "status": "status_6abe0fd1e71948d92df135f4af01f09d.json",
-        "history": "history_6abe0fd1e71948d92df135f4af01f09d.json",
-        "latest": "latest_6abe0fd1e71948d92df135f4af01f09d.json"
-      },
-      "displayName": "Player - 2025/10/15 11:20:54",
-      "shortId": "6abe0fd1"
+      "displayName": "Player - 2025/10/16 18:01:48",
+      "shortId": "ca17332c"
     }
   ],
   "description": "Manifest file listing all available game sessions",

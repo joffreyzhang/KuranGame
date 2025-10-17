@@ -314,7 +314,7 @@ ${statusPrompt}
 请用中文回复，语言要生动有趣。`;
 
     const message = await anthropic.messages.create({
-      model: 'deepseek-chat',
+      model: 'gemini-2.5-pro',
       max_tokens: 10000,
       system: systemPrompt,
       messages: [
@@ -408,7 +408,7 @@ ${statusPrompt}
     });
 
     const message = await anthropic.messages.create({
-      model: 'deepseek-chat',
+      model: 'gemini-2.5-pro',
       max_tokens: 10000,
       system: systemPrompt,
       messages: messages

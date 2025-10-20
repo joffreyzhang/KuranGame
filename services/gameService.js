@@ -1,15 +1,16 @@
 import Anthropic from '@anthropic-ai/sdk';
 import dotenv from 'dotenv';
 import { prepareGameSettingsForLLM } from './gameSettingsService.js';
-import { 
-  initializeStatus, 
-  loadStatus, 
-  saveStatus, 
+import {
+  initializeStatus,
+  loadStatus,
+  saveStatus,
   applyClaudeUpdates,
   getStatusUpdatePrompt,
   updateStatus,
   extractActionOptions
 } from './statusService.js';
+import { analyzeAndUpdateGameData } from './gameDataUpdateService.js';
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
@@ -156,10 +157,13 @@ export const processPlayerAction = async (sessionId, action) => {
     // Extract action options for initial response
     const actionOptions = extractActionOptions(response.message);
 
+    // Update structured game data files (NEW - Initial game state)
+    await analyzeAndUpdateGameData(session.fileId, sessionId, response.message, action);
+
     // Persist the initialized state and conversation history
-    saveSessionMetadata(sessionId, { 
-      fileId: session.fileId, 
-      playerName: session.playerName, 
+    saveSessionMetadata(sessionId, {
+      fileId: session.fileId,
+      playerName: session.playerName,
       createdAt: session.gameState.createdAt,
       isInitialized: true,
       conversationHistory: session.conversationHistory
@@ -201,7 +205,7 @@ export const processPlayerAction = async (sessionId, action) => {
 
   // Update game state based on action
   updateGameState(session, action, response);
-  
+
   // Parse and apply status updates from Claude's response (now async)
   const updatedStatus = await applyClaudeUpdates(sessionId, response.message);
   session.characterStatus = updatedStatus;
@@ -209,10 +213,13 @@ export const processPlayerAction = async (sessionId, action) => {
   // Extract action options for the frontend to render as buttons
   const actionOptions = extractActionOptions(response.message);
 
+  // Update structured game data files (NEW - Update background/player/items/world JSON files)
+  await analyzeAndUpdateGameData(session.fileId, sessionId, response.message, action);
+
   // Persist the conversation history after each action
-  saveSessionMetadata(sessionId, { 
-    fileId: session.fileId, 
-    playerName: session.playerName, 
+  saveSessionMetadata(sessionId, {
+    fileId: session.fileId,
+    playerName: session.playerName,
     createdAt: session.gameState.createdAt,
     isInitialized: true,
     conversationHistory: session.conversationHistory
@@ -314,7 +321,7 @@ ${statusPrompt}
 请用中文回复，语言要生动有趣。`;
 
     const message = await anthropic.messages.create({
-      model: 'gemini-2.5-pro',
+      model: 'deepseek-chat',
       max_tokens: 10000,
       system: systemPrompt,
       messages: [
@@ -408,7 +415,7 @@ ${statusPrompt}
     });
 
     const message = await anthropic.messages.create({
-      model: 'gemini-2.5-pro',
+      model: 'deepseek-chat',
       max_tokens: 10000,
       system: systemPrompt,
       messages: messages

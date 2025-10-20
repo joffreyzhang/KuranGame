@@ -344,7 +344,7 @@ export async function parseGameResponseChanges(responseText, currentStatus = {})
     character: currentStatus.character || {}
   });
   console.log('Response text length:', responseText.length);
-  console.log('Response preview:', responseText.substring(0, 500));
+  // console.log('Response preview:', responseText.substring(0, 500));
 
   // Extract just attributes for comparison
   const currentAttributes = currentStatus.attributes || {};
@@ -423,7 +423,7 @@ IMPORTANT:
     });
 
     const responseContent = message.content[0].text.trim();
-    console.log('✅ LLM response:', responseContent);
+    // console.log('✅ LLM response:', responseContent);
 
     // Try to extract JSON from response (handle markdown code blocks)
     let jsonText = responseContent;
@@ -652,10 +652,10 @@ export function extractActionOptions(responseText) {
   console.log(`✅ Extracted ${uniqueOptions.length} unique action options`);
   if (uniqueOptions.length === 0) {
     console.log('⚠️ No action options found in response');
-    console.log('Response preview (first 500 chars):');
-    console.log(responseText.substring(0, 500));
-    console.log('\nResponse preview (last 500 chars):');
-    console.log(responseText.substring(Math.max(0, responseText.length - 500)));
+    // console.log('Response preview (first 500 chars):');
+    // console.log(responseText.substring(0, 500));
+    // console.log('\nResponse preview (last 500 chars):');
+    // console.log(responseText.substring(Math.max(0, responseText.length - 500)));
   } else {
     console.log('Options summary:', uniqueOptions.map(o => `[${o.source}] ${o.text.substring(0, 30)}...`));
   }
@@ -954,8 +954,6 @@ export function getStatusUpdatePrompt(status) {
 ${attributesList ? `属性：\n${attributesList}` : '属性：(将从你的回复中自动提取)'}
 
 系统会自动从你的回复中提取"核心属性成长"或类似格式的属性数据。
-如果游戏事件导致角色其他状态变化（如受伤、获得物品、移动位置等），可以在回复中包含：
-{{STATUS_UPDATE: {"character": {"health": 新生命值}, "location": "新位置"}}}
 `.trim();
 }
 

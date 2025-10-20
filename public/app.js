@@ -44,31 +44,39 @@ uploadArea.addEventListener('dragleave', () => {
 uploadArea.addEventListener('drop', (e) => {
     e.preventDefault();
     uploadArea.classList.remove('dragover');
-    
+
     const files = e.dataTransfer.files;
-    if (files.length > 0 && files[0].type === 'application/pdf') {
-        fileInput.files = files;
-        handleFileSelect({ target: fileInput });
-    } else {
-        alert('Please drop a PDF file');
+    if (files.length > 0) {
+        const file = files[0];
+        const fileExt = file.name.toLowerCase();
+        if (fileExt.endsWith('.pdf') || fileExt.endsWith('.docx')) {
+            fileInput.files = files;
+            handleFileSelect({ target: fileInput });
+        } else {
+            alert('Please drop a PDF or DOCX file');
+        }
     }
 });
 
 function handleFileSelect(e) {
     const file = e.target.files[0];
-    
+
     if (!file) return;
-    
-    if (file.type !== 'application/pdf') {
-        alert('Please select a PDF file');
+
+    const fileName = file.name.toLowerCase();
+    const isPDF = fileName.endsWith('.pdf') || file.type === 'application/pdf';
+    const isDOCX = fileName.endsWith('.docx') || file.type === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
+
+    if (!isPDF && !isDOCX) {
+        alert('Please select a PDF or DOCX file');
         return;
     }
-    
+
     if (file.size > 10 * 1024 * 1024) {
         alert('File size must be less than 10MB');
         return;
     }
-    
+
     selectedFile = file;
     displayFileInfo(file);
     uploadBtn.style.display = 'block';
@@ -86,23 +94,23 @@ function displayFileInfo(file) {
 
 async function uploadAndProcess() {
     if (!selectedFile) return;
-    
+
     uploadBtn.disabled = true;
     progressContainer.style.display = 'block';
     resultContainer.style.display = 'none';
     logContainer.innerHTML = '';
-    
+
     try {
         // Step 1: Upload file
         addLog('Uploading file...', 'info');
         const uploadResult = await uploadFile(selectedFile);
         currentFileId = uploadResult.fileId;
         addLog(`File uploaded successfully! ID: ${currentFileId}`, 'success');
-        
+
         // Step 2: Process with SSE
-        addLog('Starting PDF processing with SSE...', 'info');
+        addLog('Starting document processing with SSE...', 'info');
         await processWithSSE(currentFileId);
-        
+
     } catch (error) {
         console.error('Error:', error);
         addLog(`Error: ${error.message}`, 'error');
@@ -201,19 +209,24 @@ function addLog(message, type = 'info') {
 function displayResults(data) {
     resultContainer.style.display = 'block';
     uploadBtn.disabled = false;
-    
-    const { pdfData, gameSettings: settings, fileId: dataFileId } = data;
+
+    const { pdfData, documentData, gameSettings: settings, fileId: dataFileId } = data;
     const displayFileId = dataFileId || currentFileId;
-    
-    let html = '<h3>📄 PDF Information</h3>';
-    html += `<p><strong>Pages:</strong> ${pdfData.numPages}</p>`;
-    html += `<p><strong>Text Length:</strong> ${pdfData.textLength} characters</p>`;
-    
+
+    // Support both old pdfData and new documentData format
+    const docData = documentData || pdfData;
+
+    let html = `<h3>📄 ${docData.type ? docData.type.toUpperCase() : 'Document'} Information</h3>`;
+    if (docData.numPages !== null && docData.numPages !== undefined) {
+        html += `<p><strong>Pages:</strong> ${docData.numPages}</p>`;
+    }
+    html += `<p><strong>Text Length:</strong> ${docData.textLength} characters</p>`;
+
     if (settings) {
         html += '<h3>🎮 Game Settings</h3>';
         html += `<p><strong>Title:</strong> ${settings.title}</p>`;
         html += `<p><strong>Description:</strong> ${settings.description}</p>`;
-        
+
         if (settings.characters && settings.characters.length > 0) {
             html += '<h3>👥 Characters</h3>';
             html += '<ul>';
@@ -222,7 +235,7 @@ function displayResults(data) {
             });
             html += '</ul>';
         }
-        
+
         if (settings.locations && settings.locations.length > 0) {
             html += '<h3>📍 Locations</h3>';
             html += '<ul>';
@@ -231,7 +244,7 @@ function displayResults(data) {
             });
             html += '</ul>';
         }
-        
+
         if (settings.items && settings.items.length > 0) {
             html += '<h3>🎒 Items</h3>';
             html += '<ul>';
@@ -241,20 +254,20 @@ function displayResults(data) {
             html += '</ul>';
         }
     }
-    
+
     // Add Start Game button
     if (displayFileId) {
         html += `<div style="margin-top: 20px; text-align: center;">
-            <button onclick="startGameWithFile('${displayFileId}')" 
+            <button onclick="startGameWithFile('${displayFileId}')"
                     style="background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
-                           color: white; border: none; padding: 15px 40px; 
+                           color: white; border: none; padding: 15px 40px;
                            border-radius: 25px; cursor: pointer; font-size: 1.1em;
                            font-weight: 600; transition: transform 0.2s;">
                 🎮 使用Claude开始游戏
             </button>
         </div>`;
     }
-    
+
     gameSettings.innerHTML = html;
 }
 
@@ -285,23 +298,23 @@ function switchTab(tab) {
 // Load PDF files from pdf_data directory
 async function loadPDFDataFiles() {
     try {
-        pdfList.innerHTML = '<p style="text-align: center; color: #999;">Loading PDF files...</p>';
-        
+        pdfList.innerHTML = '<p style="text-align: center; color: #999;">Loading files...</p>';
+
         const response = await fetch(`${API_BASE_URL}/pdf/data/list`);
         const data = await response.json();
-        
+
         if (!data.files || data.files.length === 0) {
-            pdfList.innerHTML = '<p style="text-align: center; color: #999;">No PDF files found in pdf_data directory</p>';
+            pdfList.innerHTML = '<p style="text-align: center; color: #999;">No files found in pdf_data directory</p>';
             return;
         }
-        
+
         pdfList.innerHTML = '';
         data.files.forEach(file => {
             const item = createPDFListItem(file);
             pdfList.appendChild(item);
         });
     } catch (error) {
-        console.error('Error loading PDF files:', error);
+        console.error('Error loading files:', error);
         pdfList.innerHTML = '<p style="text-align: center; color: #dc3545;">Error loading files</p>';
     }
 }
@@ -310,20 +323,23 @@ async function loadPDFDataFiles() {
 function createPDFListItem(file) {
     const item = document.createElement('div');
     item.className = 'pdf-item';
-    
+
     const sizeInMB = (file.size / (1024 * 1024)).toFixed(2);
     const modifiedDate = new Date(file.modified).toLocaleDateString();
-    
+
+    // Determine file icon based on type
+    const fileIcon = file.type === 'docx' ? '📝' : '📄';
+
     item.innerHTML = `
         <div class="pdf-item-info">
-            <div class="pdf-item-name">📄 ${file.filename}</div>
+            <div class="pdf-item-name">${fileIcon} ${file.filename}</div>
             <div class="pdf-item-meta">${sizeInMB} MB • Modified: ${modifiedDate}</div>
         </div>
         <button class="pdf-item-process" onclick="processPDFDataFile('${encodeURIComponent(file.filename)}')">
             Process
         </button>
     `;
-    
+
     return item;
 }
 

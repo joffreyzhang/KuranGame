@@ -4,7 +4,8 @@ import { fileURLToPath } from 'url';
 import { dirname } from 'path';
 import crypto from 'crypto';
 import { processPDFFile } from '../services/pdfService.js';
-import { extractGameSettings } from '../services/gameSettingsService.js';
+import { processDocxFile } from '../services/docxService.js';
+import { extractGameSettings, saveDetailedGameData } from '../services/gameSettingsService.js';
 import { storeGameSettings, persistGameSettings } from '../services/gameService.js';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -13,13 +14,46 @@ const __dirname = dirname(__filename);
 // Store processing status in memory (in production, use Redis or database)
 const processingStatus = new Map();
 
-// PDF data directory path
-const PDF_DATA_DIR = path.join(__dirname, '..', 'pdf_data');
+// Document data directory path (supports both PDF and DOCX)
+const DOCUMENT_DATA_DIR = path.join(__dirname, '..', 'pdf_data');
+
+// Helper function to determine file type
+const getFileType = (filename) => {
+  const ext = path.extname(filename).toLowerCase();
+  if (ext === '.pdf') return 'pdf';
+  if (ext === '.docx') return 'docx';
+  return null;
+};
+
+// Helper function to process document based on type
+const processDocument = async (filePath, progressCallback) => {
+  const fileType = getFileType(filePath);
+
+  if (fileType === 'pdf') {
+    return await processPDFFile(filePath, progressCallback);
+  } else if (fileType === 'docx') {
+    const docxData = await processDocxFile(filePath, progressCallback);
+    // Transform DOCX data to match PDF data structure
+    return {
+      text: docxData.text,
+      numpages: null, // DOCX doesn't have page concept
+      info: docxData.metadata,
+      metadata: docxData.metadata
+    };
+  }
+
+  throw new Error('Unsupported file type');
+};
 
 export const uploadPDF = async (req, res) => {
   try {
     if (!req.file) {
       return res.status(400).json({ error: 'No file uploaded' });
+    }
+
+    const fileType = getFileType(req.file.originalname);
+    if (!fileType) {
+      return res.status(400).json({ error: 'Unsupported file type. Only PDF and DOCX files are supported.' });
     }
 
     const fileId = path.parse(req.file.filename).name;
@@ -28,6 +62,7 @@ export const uploadPDF = async (req, res) => {
       filename: req.file.originalname,
       path: req.file.path,
       size: req.file.size,
+      type: fileType,
       uploadedAt: new Date().toISOString(),
       status: 'uploaded'
     };
@@ -89,43 +124,55 @@ export const processPDFWithSSE = async (req, res) => {
       res.write(`data: ${JSON.stringify(update)}\n\n`);
     };
 
-    // Stage 1: Reading PDF
-    updateProgress('reading', 10, 'Reading PDF file...');
+    // Stage 1: Reading document
+    updateProgress('reading', 10, `Reading ${status.type?.toUpperCase() || 'document'} file...`);
 
-    const pdfData = await processPDFFile(status.path, (progress) => {
-      updateProgress('reading', 10 + progress * 0.3, `Reading PDF: ${Math.round(progress)}%`);
+    const documentData = await processDocument(status.path, (progress) => {
+      updateProgress('reading', 10 + progress * 0.3, `Reading ${status.type?.toUpperCase() || 'document'}: ${Math.round(progress)}%`);
     });
 
     // Stage 2: Extracting text
     updateProgress('extracting', 40, 'Extracting text content...');
-    
+
     // Stage 3: Analyzing content
     updateProgress('analyzing', 60, 'Analyzing game settings...');
 
-    const gameSettings = await extractGameSettings(pdfData, (progress) => {
-      updateProgress('analyzing', 60 + progress * 0.3, `Analyzing: ${Math.round(progress)}%`);
+    const gameSettings = await extractGameSettings(documentData, (progress) => {
+      updateProgress('analyzing', 60 + progress * 0.2, `Analyzing: ${Math.round(progress)}%`);
     });
 
     // Store game settings for later use (in memory and disk)
     storeGameSettings(fileId, gameSettings);
     persistGameSettings(fileId, gameSettings);
 
-    // Stage 4: Complete
+    // Stage 4: Saving structured game data (uses data from gameSettings.detailedGameData)
+    updateProgress('initializing', 85, 'Saving structured game data...');
+    saveDetailedGameData(fileId, gameSettings);
+    updateProgress('initializing', 95, 'Game data initialized successfully');
+
+    // Stage 5: Complete
     updateProgress('complete', 100, 'Processing complete', {
-      pdfData: {
-        numPages: pdfData.numpages,
-        textLength: pdfData.text.length,
-        info: pdfData.info
+      documentData: {
+        numPages: documentData.numpages,
+        textLength: documentData.text.length,
+        info: documentData.info,
+        type: status.type
       },
       gameSettings,
+      gameData: {
+        hasBackgroundData: !!gameSettings.detailedGameData?.backgroundData,
+        hasPlayerData: true,
+        hasItemData: true,
+        hasWorldData: !!gameSettings.detailedGameData?.worldData
+      },
       fileId
     });
 
     // Send completion event
-    res.write(`event: complete\ndata: ${JSON.stringify({ 
+    res.write(`event: complete\ndata: ${JSON.stringify({
       success: true,
       fileId,
-      gameSettings 
+      gameSettings
     })}\n\n`);
 
   } catch (error) {
@@ -160,26 +207,30 @@ export const getPDFStatus = async (req, res) => {
 
 export const listPDFDataFiles = async (req, res) => {
   try {
-    if (!fs.existsSync(PDF_DATA_DIR)) {
+    if (!fs.existsSync(DOCUMENT_DATA_DIR)) {
       return res.json({ files: [] });
     }
 
-    const files = fs.readdirSync(PDF_DATA_DIR)
-      .filter(file => file.toLowerCase().endsWith('.pdf'))
+    const files = fs.readdirSync(DOCUMENT_DATA_DIR)
+      .filter(file => {
+        const ext = file.toLowerCase();
+        return ext.endsWith('.pdf') || ext.endsWith('.docx');
+      })
       .map(file => {
-        const filePath = path.join(PDF_DATA_DIR, file);
+        const filePath = path.join(DOCUMENT_DATA_DIR, file);
         const stats = fs.statSync(filePath);
         return {
           filename: file,
           size: stats.size,
           modified: stats.mtime,
+          type: getFileType(file),
           path: `pdf_data/${file}`
         };
       });
 
     res.json({ files });
   } catch (error) {
-    console.error('List PDF data files error:', error);
+    console.error('List document files error:', error);
     res.status(500).json({ error: 'Failed to list files', message: error.message });
   }
 };
@@ -194,10 +245,10 @@ export const processPDFDataFile = async (req, res) => {
   res.setHeader('Connection', 'keep-alive');
   res.setHeader('X-Accel-Buffering', 'no');
 
-  const filePath = path.join(PDF_DATA_DIR, decodedFilename);
+  const filePath = path.join(DOCUMENT_DATA_DIR, decodedFilename);
 
   // Security check: prevent directory traversal
-  if (!filePath.startsWith(PDF_DATA_DIR)) {
+  if (!filePath.startsWith(DOCUMENT_DATA_DIR)) {
     res.write(`data: ${JSON.stringify({ error: 'Invalid file path' })}\n\n`);
     res.end();
     return;
@@ -209,6 +260,13 @@ export const processPDFDataFile = async (req, res) => {
     return;
   }
 
+  const fileType = getFileType(decodedFilename);
+  if (!fileType) {
+    res.write(`data: ${JSON.stringify({ error: 'Unsupported file type' })}\n\n`);
+    res.end();
+    return;
+  }
+
   // Generate fileId for this processing
   const fileId = crypto.randomBytes(16).toString('hex');
   const fileInfo = {
@@ -216,6 +274,7 @@ export const processPDFDataFile = async (req, res) => {
     filename: decodedFilename,
     path: filePath,
     size: fs.statSync(filePath).size,
+    type: fileType,
     uploadedAt: new Date().toISOString(),
     status: 'processing',
     source: 'pdf_data'
@@ -224,8 +283,8 @@ export const processPDFDataFile = async (req, res) => {
   processingStatus.set(fileId, fileInfo);
 
   // Send initial connection message
-  res.write(`data: ${JSON.stringify({ 
-    stage: 'connected', 
+  res.write(`data: ${JSON.stringify({
+    stage: 'connected',
     progress: 0,
     message: 'Connection established',
     fileId
@@ -239,43 +298,55 @@ export const processPDFDataFile = async (req, res) => {
       res.write(`data: ${JSON.stringify(update)}\n\n`);
     };
 
-    // Stage 1: Reading PDF
-    updateProgress('reading', 10, 'Reading PDF file...');
+    // Stage 1: Reading document
+    updateProgress('reading', 10, `Reading ${fileType.toUpperCase()} file...`);
 
-    const pdfData = await processPDFFile(filePath, (progress) => {
-      updateProgress('reading', 10 + progress * 0.3, `Reading PDF: ${Math.round(progress)}%`);
+    const documentData = await processDocument(filePath, (progress) => {
+      updateProgress('reading', 10 + progress * 0.3, `Reading ${fileType.toUpperCase()}: ${Math.round(progress)}%`);
     });
 
     // Stage 2: Extracting text
     updateProgress('extracting', 40, 'Extracting text content (支持中文)...');
-    
+
     // Stage 3: Analyzing content
     updateProgress('analyzing', 60, 'Analyzing game settings...');
 
-    const gameSettings = await extractGameSettings(pdfData, (progress) => {
-      updateProgress('analyzing', 60 + progress * 0.3, `Analyzing: ${Math.round(progress)}%`);
+    const gameSettings = await extractGameSettings(documentData, (progress) => {
+      updateProgress('analyzing', 60 + progress * 0.2, `Analyzing: ${Math.round(progress)}%`);
     });
 
     // Store game settings for later use (in memory and disk)
     storeGameSettings(fileId, gameSettings);
     persistGameSettings(fileId, gameSettings);
 
-    // Stage 4: Complete
+    // Stage 4: Saving structured game data (uses data from gameSettings.detailedGameData)
+    updateProgress('initializing', 85, 'Saving structured game data...');
+    saveDetailedGameData(fileId, gameSettings);
+    updateProgress('initializing', 95, 'Game data initialized successfully');
+
+    // Stage 5: Complete
     updateProgress('complete', 100, 'Processing complete', {
-      pdfData: {
-        numPages: pdfData.numpages,
-        textLength: pdfData.text.length,
-        info: pdfData.info
+      documentData: {
+        numPages: documentData.numpages,
+        textLength: documentData.text.length,
+        info: documentData.info,
+        type: fileType
       },
       gameSettings,
+      gameData: {
+        hasBackgroundData: !!gameSettings.detailedGameData?.backgroundData,
+        hasPlayerData: true,
+        hasItemData: true,
+        hasWorldData: !!gameSettings.detailedGameData?.worldData
+      },
       fileId
     });
 
     // Send completion event
-    res.write(`event: complete\ndata: ${JSON.stringify({ 
+    res.write(`event: complete\ndata: ${JSON.stringify({
       success: true,
       fileId,
-      gameSettings 
+      gameSettings
     })}\n\n`);
 
   } catch (error) {

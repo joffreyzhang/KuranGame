@@ -339,11 +339,11 @@
 <body>
     <div class="container">
         <h1>📚 互动小说</h1>
-        <p class="subtitle">上传PDF文件或从现有文件中选择</p>
+        <p class="subtitle">上传PDF或DOCX文件，或从现有文件中选择</p>
 
         <!-- Tab Selection -->
         <div style="display: flex; gap: 10px; margin-bottom: 20px;">
-            <button class="tab-btn active" id="uploadTab" onclick="switchTab('upload')">📤 上传PDF</button>
+            <button class="tab-btn active" id="uploadTab" onclick="switchTab('upload')">📤 上传文件</button>
             <button class="tab-btn" id="selectTab" onclick="switchTab('select')">📁 从pdf_data选择</button>
         </div>
 
@@ -352,10 +352,10 @@
             <div class="upload-area" id="uploadArea">
                 <div class="upload-icon">📄</div>
                 <p><strong>点击上传</strong> 或拖拽文件到此处</p>
-                <p style="font-size: 0.9em; color: #999; margin-top: 10px;">仅支持PDF文件 (最大10MB)</p>
+                <p style="font-size: 0.9em; color: #999; margin-top: 10px;">支持PDF和DOCX文件 (最大10MB)</p>
             </div>
 
-            <input type="file" id="fileInput" accept=".pdf" />
+            <input type="file" id="fileInput" accept=".pdf,.docx" />
 
             <div class="file-info" id="fileInfo"></div>
 
@@ -365,7 +365,7 @@
         <!-- Select Section -->
         <div id="selectSection" style="display: none;">
             <div id="pdfList" class="pdf-list">
-                <p style="text-align: center; color: #999;">正在加载PDF文件...</p>
+                <p style="text-align: center; color: #999;">正在加载文件...</p>
             </div>
         </div>
 

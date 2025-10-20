@@ -18,7 +18,7 @@ export const extractGameSettings = async (pdfData, progressCallback) => {
 
     console.log('\n=== 📄 EXTRACTING GAME SETTINGS FROM PDF ===');
     console.log('PDF text length:', text.length);
-    console.log('PDF preview:', text.substring(0, 500));
+    // console.log('PDF preview:', text.substring(0, 500));
 
     // Use Claude AI for accurate initial extraction
     const llmExtraction = await extractWithClaude(text, progressCallback);
@@ -42,13 +42,14 @@ export const extractGameSettings = async (pdfData, progressCallback) => {
 
 /**
  * Use Claude AI to extract game settings from PDF text
+ * Enhanced to extract detailed 4-category game data structure
  */
 async function extractWithClaude(text, progressCallback) {
   console.log('🤖 Using Claude AI for PDF extraction...');
 
   if (progressCallback) progressCallback(40);
 
-  const prompt = `You are a game content analyzer. Extract ALL game settings from this PDF text.
+  const prompt = `You are a game content analyzer. Extract ALL game settings from this PDF text and organize into a comprehensive structure.
 
 PDF CONTENT:
 ${text}
@@ -58,13 +59,13 @@ Extract and return ONLY valid JSON in this EXACT format:
   "title": "Game title extracted from PDF",
   "description": "Brief description of the game",
   "characters": [
-    {"name": "Character Name", "description": "Description"}
+    {"name": "Character Name", "description": "Description", "age": 0, "occupation": "Role"}
   ],
   "locations": [
-    {"name": "Location Name", "description": "Description"}
+    {"name": "Location Name", "description": "Description", "type": "indoor/outdoor/city"}
   ],
   "items": [
-    {"name": "Item Name", "description": "Description"}
+    {"name": "Item Name", "description": "Description", "category": "Type", "value": 0}
   ],
   "rules": [
     "Rule 1",
@@ -84,6 +85,47 @@ Extract and return ONLY valid JSON in this EXACT format:
     "fullText": "Full narrative text",
     "paragraphs": ["paragraph 1", "paragraph 2"],
     "wordCount": 1000
+  },
+  "detailedGameData": {
+    "backgroundData": {
+      "eraBackground": {
+        "timePeriod": "Time period",
+        "setting": "World setting",
+        "socialContext": "Social context",
+        "currentSituation": "Current state"
+      },
+      "protagonistBackground": {
+        "name": "Protagonist name",
+        "age": 0,
+        "occupation": "Occupation",
+        "backstory": "Background story",
+        "motivation": "Main motivation",
+        "startingLocation": "Starting location"
+      }
+    },
+    "worldData": {
+      "npcs": [
+        {
+          "id": "npc_id",
+          "name": "NPC Name",
+          "occupation": "Occupation",
+          "personality": "Personality",
+          "location": "Location",
+          "dialogue": {
+            "greeting": "Hello",
+            "farewell": "Goodbye"
+          }
+        }
+      ],
+      "buildings": [
+        {
+          "id": "building_id",
+          "name": "Building Name",
+          "type": "shop/house/inn",
+          "description": "Description"
+        }
+      ]
+    }
   }
 }
 
@@ -98,9 +140,15 @@ IMPORTANT EXTRACTION RULES:
 
 3. **actionOptions**: Extract action options marked with **!! text !!**
 
-4. **characters**, **locations**, **items**: Extract from their respective sections
+4. **characters**, **locations**, **items**: Extract from their respective sections with as much detail as available
 
-5. Return ONLY JSON, no explanation, no markdown code blocks`;
+5. **detailedGameData**: Extract detailed world information:
+   - backgroundData: Era setting, protagonist background
+   - worldData: NPCs with personalities and dialogues, buildings with types and services
+
+6. If detailed information is not available in the PDF, use reasonable defaults or empty values
+
+7. Return ONLY JSON, no explanation, no markdown code blocks`;
 
   try {
     const message = await anthropic.messages.create({
@@ -513,5 +561,138 @@ Note: These are suggested action options. You can use them in your game response
 ${gameSettings.narrative.fullText}`;
 
   return prompt.trim();
+};
+
+/**
+ * Save detailed game data to separate JSON files
+ * This saves the 4-category structure extracted during PDF processing
+ */
+export const saveDetailedGameData = (fileId, gameSettings) => {
+  import('fs').then(fs => {
+    import('path').then(path => {
+      import('url').then(({ fileURLToPath }) => {
+        import('path').then(({ dirname }) => {
+          const __filename = fileURLToPath(import.meta.url);
+          const __dirname = dirname(__filename);
+          const GAME_DATA_DIR = path.join(__dirname, '..', 'public', 'game_data');
+
+          // Ensure directory exists
+          if (!fs.existsSync(GAME_DATA_DIR)) {
+            fs.mkdirSync(GAME_DATA_DIR, { recursive: true });
+          }
+
+          const detailedData = gameSettings.detailedGameData;
+          if (!detailedData) {
+            console.log('⚠️ No detailed game data to save');
+            return;
+          }
+
+          // Save each category to separate files
+          const timestamp = new Date().toISOString();
+
+          // Background data
+          if (detailedData.backgroundData) {
+            fs.writeFileSync(
+              path.join(GAME_DATA_DIR, `background_${fileId}.json`),
+              JSON.stringify({
+                fileId,
+                lastUpdated: timestamp,
+                data: detailedData.backgroundData
+              }, null, 2)
+            );
+          }
+
+          // Player data (combine from multiple sources)
+          const playerData = {
+            characterAttributes: {
+              基础属性: gameSettings.initialAttributes || {},
+              自定义属性: {}
+            },
+            inventory: {
+              capacity: 20,
+              items: gameSettings.initialItems || [],
+              money: { currency: "金币", amount: 0 }
+            }
+          };
+
+          fs.writeFileSync(
+            path.join(GAME_DATA_DIR, `player_${fileId}.json`),
+            JSON.stringify({
+              fileId,
+              lastUpdated: timestamp,
+              data: playerData
+            }, null, 2)
+          );
+
+          // Item data
+          const itemData = {
+            items: gameSettings.items || [],
+            itemCategories: []
+          };
+
+          fs.writeFileSync(
+            path.join(GAME_DATA_DIR, `items_${fileId}.json`),
+            JSON.stringify({
+              fileId,
+              lastUpdated: timestamp,
+              data: itemData
+            }, null, 2)
+          );
+
+          // World data
+          if (detailedData.worldData) {
+            const worldData = {
+              scenes: gameSettings.locations?.map((loc, idx) => ({
+                id: `scene_${idx}`,
+                name: loc.name,
+                description: loc.description,
+                type: loc.type || 'unknown',
+                accessible: true
+              })) || [],
+              buildings: detailedData.worldData.buildings || [],
+              npcs: detailedData.worldData.npcs || [],
+              map: {
+                name: gameSettings.title,
+                regions: [],
+                connections: []
+              }
+            };
+
+            fs.writeFileSync(
+              path.join(GAME_DATA_DIR, `world_${fileId}.json`),
+              JSON.stringify({
+                fileId,
+                lastUpdated: timestamp,
+                data: worldData
+              }, null, 2)
+            );
+          }
+
+          // Update manifest
+          const manifestPath = path.join(GAME_DATA_DIR, 'manifest.json');
+          let manifest = {};
+          if (fs.existsSync(manifestPath)) {
+            manifest = JSON.parse(fs.readFileSync(manifestPath, 'utf-8'));
+          }
+
+          manifest[fileId] = {
+            createdAt: timestamp,
+            lastUpdated: timestamp,
+            title: gameSettings.title,
+            files: {
+              background: `background_${fileId}.json`,
+              player: `player_${fileId}.json`,
+              items: `items_${fileId}.json`,
+              world: `world_${fileId}.json`
+            }
+          };
+
+          fs.writeFileSync(manifestPath, JSON.stringify(manifest, null, 2));
+
+          console.log('✅ Detailed game data saved to separate JSON files');
+        });
+      });
+    });
+  });
 };
 

@@ -108,12 +108,18 @@ function addMessage(type, text) {
         const bubble = document.createElement('div');
         bubble.className = 'message-bubble';
 
+        // Clean backend markers from game messages
+        let cleanedText = text;
+        if (type === 'game') {
+            cleanedText = cleanResponseText(text);
+        }
+
         // 对游戏消息使用Markdown渲染（如果marked库可用）
         if (type === 'game' && typeof marked !== 'undefined') {
-            const markdownHtml = marked.parse(text);
+            const markdownHtml = marked.parse(cleanedText);
             bubble.innerHTML = markdownHtml;
         } else {
-            bubble.textContent = text;
+            bubble.textContent = cleanedText;
         }
 
         messageDiv.appendChild(bubble);
@@ -567,9 +573,12 @@ function appendStreamingText(chunk) {
         currentStreamingMessage.rawText += chunk;
 
         // 温和的文本清理：只移除回车符，保留Markdown结构所需的换行符
-        const processedText = currentStreamingMessage.rawText
+        let processedText = currentStreamingMessage.rawText
             .replace(/[\r]+/g, '') // 移除回车符
             .replace(/ {2,}/g, ' '); // 将多个空格替换为单个空格
+
+        // Clean backend markers from the text
+        processedText = cleanResponseText(processedText);
 
         if (typeof marked !== 'undefined') {
             // 对累积的完整文本进行一次性Markdown渲染
@@ -608,6 +617,30 @@ function enableInput() {
     isProcessing = false;
     playerInput.disabled = false;
     sendBtn.disabled = false;
+}
+
+/**
+ * Clean response text by removing backend markers
+ * Removes {{STATUS_UPDATE: ...}} and [ACTION: ...] markers
+ */
+function cleanResponseText(text) {
+    if (!text) return '';
+
+    let cleaned = text;
+
+    // Remove STATUS_UPDATE markers like {{STATUS_UPDATE: {"character": {...}}}}
+    cleaned = cleaned.replace(/\{\{STATUS_UPDATE:\s*\{[\s\S]*?\}\}\}/g, '');
+
+    // Remove ACTION markers like [ACTION: text]
+    cleaned = cleaned.replace(/\[ACTION:\s*[^\]]+\]/g, '');
+
+    // Remove extra blank lines that may result from removing markers
+    cleaned = cleaned.replace(/\n{3,}/g, '\n\n');
+
+    // Trim leading/trailing whitespace
+    cleaned = cleaned.trim();
+
+    return cleaned;
 }
 
 /**

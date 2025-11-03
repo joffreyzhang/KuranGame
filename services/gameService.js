@@ -159,7 +159,6 @@ export const processPlayerAction = async (sessionId, action) => {
 
     // Update structured game data files (NEW - Initial game state)
     await analyzeAndUpdateGameData(session.fileId, sessionId, response.message, action);
-
     // Persist the initialized state and conversation history
     saveSessionMetadata(sessionId, {
       fileId: session.fileId,
@@ -298,7 +297,6 @@ ${statusPrompt}
 **重要：行动选项格式规范**
 在每次回复的结尾，你必须提供玩家可以选择的行动选项。
 使用以下特殊格式来标记行动选项（每个选项独占一行）：
-
 [ACTION: 选项描述文本]
 
 示例：

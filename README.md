@@ -1,52 +1,44 @@
 # Interactive Fiction Backend
 
-An interactive fiction game backend that processes PDF game settings and uses LLM for dynamic storytelling.
-
-## 🚀 Quick Deploy to Vercel
-
-Deploy your entire app (frontend + backend) to Vercel in minutes:
-
-```bash
-# Install Vercel CLI
-npm install -g vercel
-
-# Deploy
-vercel
-```
-
-📖 **[Complete Vercel Deployment Guide →](VERCEL_DEPLOYMENT.md)**
-
-**Or use the web interface**: https://vercel.com/new
-
----
+A comprehensive interactive fiction game backend that combines AI-powered storytelling, automatic image generation, and user authentication. Upload PDF/DOCX game scenarios and the system automatically extracts structured data, generates contextual images, and powers dynamic gameplay through Claude AI.
 
 ## Features
 
-- 📄 **PDF Upload & Processing**: Upload PDF files or select from `pdf_data` directory
-- 🌏 **Chinese Language Support**: Full support for Chinese PDF content
-- 🔄 **Real-time Progress with SSE**: Server-Sent Events for live processing updates
-- 🎮 **Interactive Game with Claude**: Play interactive fiction powered by Claude API
-- 🤖 **Claude AI Integration**: Uses Claude 3.5 Sonnet for intelligent game narration
-- 📊 **Game Settings Extraction**: Automatic extraction of characters, locations, items, and rules from PDFs
-- 🎯 **Action Options Extraction**: Extract predefined action options from PDFs using `**!! option !!**` markers
-- 💬 **Dual Language Support**: Start game with "start game" or "开始游戏"
-- ⚡ **Character Status System**: Real-time tracking of attributes, health, inventory, and location
-- 📈 **Smart Attribute Tracking**: Distinguishes between absolute values and deltas (50 vs +2)
-- 💾 **Persistent Saves**: Automatic game saves stored in JSON files
-- 📝 **Live Status Updates**: Claude AI can modify character stats during gameplay
+### Core Game Features
+- **Intelligent Document Processing**: Upload PDF/DOCX files and automatically extract game data (lore, characters, items, scenes)
+- **AI-Powered Storytelling**: Real-time narrative generation using Claude AI with streaming responses (SSE)
+- **Automatic Image Generation**: AI-generated visuals for NPCs, scenes, buildings, world maps, and player portraits
+- **Multi-Session Management**: Support for multiple concurrent game sessions with isolated states
+- **Dynamic Status Tracking**: Automatic character stats, inventory, attributes, and relationship management
+- **NPC Chat System**: Real-time conversations with NPCs using SSE streaming
+- **Building Interactions**: Interactive features for shops, inns, guilds, temples, and more
+- **Novel Generation**: Convert game sessions into formatted novels with multiple chapters
+- **Progressive World Unlock**: Scene-based exploration with locked/unlocked areas
+- **Music File Management**: Background music serving for enhanced atmosphere
 
-## Tech Stack
+### Authentication & User Management
+- **JWT Authentication**: Secure login/register with access + refresh token system
+- **Email Verification**: Send verification codes via email
+- **Password Security**: Bcrypt password hashing
+- **Role-Based Access**: User and admin roles with middleware protection
+- **Redis Integration**: Token caching and rate limiting
+- **MySQL Database**: Persistent user and game data storage
 
-- **Node.js** with ES Modules
-- **Express.js** for the server
-- **Multer** for file uploads
-- **pdf-parse** for PDF text extraction
-- **@anthropic-ai/sdk** for Claude AI integration
-- **Server-Sent Events (SSE)** for real-time updates
-- **JSON File Storage** for game saves
-- **Vanilla JavaScript** for frontend
+### Storage & Asset Management
+- **MinIO Object Storage**: Scalable file storage for game assets
+- **Session Persistence**: Automatic session recovery after server restart
+- **Pre-processed Game Packages**: Support for ready-to-play game packages with assets
 
 ## Installation
+
+### Prerequisites
+- Node.js (v14 or higher)
+- MySQL database
+- Redis server
+- MinIO server (optional, for object storage)
+- SMTP server (for email features)
+
+### Setup Steps
 
 1. Clone the repository:
 ```bash
@@ -60,16 +52,63 @@ npm install
 ```
 
 3. Create a `.env` file in the project root:
-```
+```env
+# Server Configuration
 PORT=3000
 UPLOAD_DIR=uploads
 MAX_FILE_SIZE=10485760
+
+# AI Services
 CLAUDE_API_KEY=your_claude_api_key_here
+OPENAI_API_KEY=your_openai_api_key_here
+IMAGE_MODEL=dall-e-3
+
+# Database
+DB_HOST=localhost
+DB_PORT=3306
+DB_USER=your_mysql_user
+DB_PASSWORD=your_mysql_password
+DB_NAME=your_database_name
+
+# Redis
+REDIS_HOST=localhost
+REDIS_PORT=6379
+REDIS_PASSWORD=your_redis_password
+
+# JWT Configuration
+JWT_SECRET=your_jwt_secret_key_here
+JWT_EXPIRES_IN=15m
+JWT_REFRESH_EXPIRES_IN=7d
+
+# Email Configuration (nodemailer)
+EMAIL_HOST=smtp.example.com
+EMAIL_PORT=465
+EMAIL_SECURE=true
+EMAIL_USER=your_email@example.com
+EMAIL_PASSWORD=your_email_password
+EMAIL_FROM=noreply@example.com
+
+# MinIO Configuration
+MINIO_ENDPOINT=localhost
+MINIO_PORT=9000
+MINIO_ACCESS_KEY=your_minio_access_key
+MINIO_SECRET_KEY=your_minio_secret_key
+MINIO_BUCKET=game-assets
+MINIO_USE_SSL=false
 ```
 
-4. **Important**: Get your Claude API key from [Anthropic Console](https://console.anthropic.com/) and add it to `.env`
+4. **Set up MySQL database**:
+```sql
+CREATE DATABASE your_database_name;
+-- Run migration scripts from login/db/ directory
+```
 
-5. Start the server:
+5. **Important**:
+   - Get your Claude API key from [Anthropic Console](https://console.anthropic.com/)
+   - Get your OpenAI API key from [OpenAI Platform](https://platform.openai.com/)
+   - Configure your SMTP settings for email features
+
+6. Start the server:
 ```bash
 npm start
 ```
@@ -79,331 +118,477 @@ For development with auto-reload:
 npm run dev
 ```
 
+The server will be available at `http://localhost:3000`
+
 ## API Endpoints
 
-### PDF Processing
+### Authentication API (`/api/auth`)
 
-#### Upload PDF
-```http
-POST /api/pdf/upload
+#### User Authentication
+- `POST /api/auth/register` - Register new user (username, email, password)
+- `POST /api/auth/login` - Login with username/password, returns JWT tokens
+- `POST /api/auth/refresh` - Refresh both access and refresh tokens
+- `POST /api/auth/refresh-access-token` - Refresh access token only
+
+#### Email Services
+- `POST /api/auth/email/send-verification-code` - Send 6-digit verification code (rate limited: 60s)
+- `POST /api/auth/email/send` - Send custom email (HTML + text)
+- `GET /api/auth/email/test-config` - Test email configuration
+
+#### Games Management
+- `POST /api/auth/games` - Create game record with file upload
+- `GET /api/auth/games/user/:userId` - Get user's games
+- `GET /api/auth/games/:fileId/files` - Get initialization files by fileId
+- `POST /api/auth/games/session` - Complete game session (upload to MinIO)
+
+#### Test & Admin Endpoints
+- `GET /api/auth/test-token` - Verify JWT token (requires auth)
+- `GET /api/auth/test-admin` - Admin-only test (requires admin role)
+
+### Game Backend API (`/api/backend`)
+
+#### Document Processing
+```bash
+# Upload and process PDF/DOCX game scenarios
+POST /api/backend/pdf/upload-and-process
 Content-Type: multipart/form-data
-
-Body: pdf (file)
+Body: { pdf: File }
 ```
 
 **Response:**
 ```json
 {
   "success": true,
-  "fileId": "abc123...",
-  "message": "File uploaded successfully",
-  "file": {
-    "fileId": "abc123...",
-    "filename": "game-settings.pdf",
-    "size": 524288,
-    "uploadedAt": "2025-10-14T10:30:00.000Z"
+  "fileId": "abc123def456",
+  "message": "Document processed and game data generated successfully",
+  "data": {
+    "filename": "game.pdf",
+    "size": 1048576,
+    "textLength": 50000,
+    "numPages": 100
   }
 }
 ```
 
-#### Process PDF with SSE
-```http
-GET /api/pdf/process/:fileId
+#### File Retrieval
+```bash
+# Get all game data files
+GET /api/backend/files/:fileId
+
+# Get specific file type (lore, player, items, scenes)
+GET /api/backend/files/:fileId/:fileType
+
+# Get game history
+GET /api/backend/history/:sessionId
+
+# Get saved game files
+GET /api/backend/saves/:saveId/files
+GET /api/backend/saves/:saveId/files/:fileType
 ```
 
-**SSE Events:**
-```javascript
-// Progress updates
-data: {"stage":"reading","progress":10,"message":"Reading PDF file..."}
-data: {"stage":"extracting","progress":40,"message":"Extracting text content..."}
-data: {"stage":"analyzing","progress":60,"message":"Analyzing game settings..."}
-data: {"stage":"complete","progress":100,"message":"Processing complete","data":{...}}
-
-// Completion event
-event: complete
-data: {"success":true,"fileId":"abc123...","gameSettings":{...}}
-```
-
-#### Get PDF Status
-```http
-GET /api/pdf/status/:fileId
-```
-
-### Game Management
-
-#### Start Game Session
-```http
-POST /api/game/start
-Content-Type: application/json
-
-{
-  "fileId": "abc123...",
-  "playerName": "Hero"
-}
-```
-
-**Response:**
+**Response Example:**
 ```json
 {
   "success": true,
-  "sessionId": "xyz789...",
+  "identifier": "abc123def456",
+  "type": "file",
+  "files": {
+    "lore": {
+      "worldBackground": { "title": "World Setting", "content": [...] },
+      "playerStory": { "title": "Character Background", "content": [...] },
+      "keyEvents": [...],
+      "gameTime": { "era": "Medieval", "period": "Spring" }
+    },
+    "player": {
+      "profile": { "name": "Player", "age": 18, "gender": "male" },
+      "stats": { "level": 1, "health": 100, "money": 100 },
+      "inventory": { "equipment": {}, "items": [] }
+    },
+    "items": {},
+    "scenes": {}
+  },
+  "timestamp": "2025-01-15T10:00:00.000Z"
+}
+```
+
+#### Session Management
+```bash
+# Create new game session
+POST /api/backend/game/session/create
+Content-Type: application/json
+Body: { fileId: "abc123", playerName: "John" }
+
+# Get session state
+GET /api/backend/game/session/:sessionId
+
+# Update player name
+PUT /api/backend/game/session/:sessionId/player/name
+```
+
+**Create Session Response:**
+```json
+{
+  "success": true,
+  "message": "Game session created successfully",
+  "sessionId": "xyz789session",
+  "fileId": "abc123def456",
+  "playerName": "John",
   "gameState": {
     "currentLocation": "start",
     "inventory": [],
-    "health": 100
-  }
+    "health": 100,
+    "isInitialized": false
+  },
+  "files": { "lore": {}, "player": {}, "items": {}, "scenes": {} }
 }
 ```
 
-#### Send Player Action
-```http
-POST /api/game/action
+#### Gameplay Actions
+```bash
+# Start the game (streaming response)
+POST /api/backend/game/session/:sessionId/stream/action-live
 Content-Type: application/json
+Body: { action: "开始游戏" }
 
-{
-  "sessionId": "xyz789...",
-  "action": "look around"
-}
+# Continue gameplay (streaming response)
+POST /api/backend/game/session/:sessionId/stream/action-live
+Body: { action: "探索周围" }
+
+# SSE stream connection
+GET /api/backend/game/session/:sessionId/stream
+
+# Use item from inventory
+POST /api/backend/game/session/:sessionId/use-item
+Body: { itemId: "sword_01" }
+
+# Change scene/location
+POST /api/backend/game/session/:sessionId/change-scene
+Body: { sceneId: "forest_entrance" }
 ```
 
-**Response:**
+**Gameplay Response:**
 ```json
 {
   "success": true,
-  "response": "You look around and see...",
-  "gameState": {
-    "currentLocation": "start",
-    "inventory": []
-  }
+  "response": "你醒来时发现自己身处一个神秘的森林...\n\n[ACTION: 探索周围环境]\n[ACTION: 查看背包]\n[ACTION: 呼唤同伴]",
+  "actionOptions": [
+    { "id": "action_1", "index": 1, "text": "探索周围环境" },
+    { "id": "action_2", "index": 2, "text": "查看背包" },
+    { "id": "action_3", "index": 3, "text": "呼唤同伴" }
+  ],
+  "gameState": { "currentLocation": "forest_entrance", "isInitialized": true },
+  "characterStatus": { "health": 100, "level": 1 },
+  "updatedFiles": { "player": {}, "scenes": {} }
 }
 ```
 
-#### Get Game State
-```http
-GET /api/game/state/:sessionId
-```
-
-## How to Use
-
-1. **Start the server**:
+#### NPC Chat System
 ```bash
-npm start
+# Chat with NPC (streaming SSE response)
+POST /api/backend/npc-chat/:sessionId/:npcId/send
+Body: { message: "Hello" }
+
+# Get chat history
+GET /api/backend/npc-chat/:sessionId/:npcId/history
+
+# Clear chat history
+DELETE /api/backend/npc-chat/:sessionId/:npcId/history
 ```
 
-2. **Access the application** at `http://localhost:3000`
+#### Building Interactions
+```bash
+# Interact with building features (shop, inn, guild, etc.)
+POST /api/backend/game/session/:sessionId/building-feature/stream
+Body: { sceneId: "town_01", buildingId: "shop_01", featureId: "buy", additionalContext: "..." }
 
-3. **Process a PDF**:
-   - **Option A**: Upload a new PDF file (drag & drop or click to browse)
-   - **Option B**: Select from existing PDFs in `pdf_data` directory
-   - Watch real-time processing progress via SSE
-   - View extracted game settings
+# Get building features
+GET /api/backend/game/session/:sessionId/scene/:sceneId/building/:buildingId/features
 
-4. **Start Playing**:
-   - Click the "🎮 Start Game with Claude" button
-   - Type `start game` or `开始游戏` to initialize the game
-   - Claude will create an immersive game experience based on your PDF
-   - Continue playing by entering your actions
-
-### PDF Format for Best Results
-
-Place your game setting PDFs in the `pdf_data` directory with content like:
-
+# Get scene buildings
+GET /api/backend/game/session/:sessionId/scene/:sceneId/buildings
 ```
-Game Title: Your Adventure Name
 
-Description: Brief overview of the game world
+#### Novel Generation
+```bash
+# Generate novel from game session
+POST /api/backend/novel/generate
+Body: { sessionId: "xyz789", theme: "adventure", style: "literary" }
 
-Characters:
-- Character Name: Description and backstory
-- Another Character: Their description
+# Get complete novel
+GET /api/backend/novel/:sessionId/:novelId
 
-Locations:
-- Location Name: Description of the place
-- Another Location: Its description
+# Get specific chapter
+GET /api/backend/novel/:sessionId/:novelId/chapter/:chapterNumber
 
-Items:
-- Item Name: Description and properties
-
-Rules:
-1. Game mechanics and rules
-2. How the game progresses
-3. Win/lose conditions
-
-Full Narrative:
-[Your detailed game narrative and setting information...]
+# Delete novel
+DELETE /api/backend/novel/:sessionId/:novelId
 ```
+
+#### Image Management
+```bash
+# Generate all game images (NPCs, scenes, buildings, world map, player)
+POST /api/backend/images/generate/:fileId
+
+# Serve images
+GET /api/backend/images/:fileId/world              # World map
+GET /api/backend/images/:fileId/player             # Player portrait
+GET /api/backend/images/:fileId/serve/scenes/:filename
+GET /api/backend/images/:fileId/serve/icons/:filename
+GET /api/backend/images/:fileId/serve/avatars/:filename
+
+# Serve saved game images
+GET /api/backend/saves/:saveId/scenes/:filename
+GET /api/backend/saves/:saveId/icons/:filename
+GET /api/backend/saves/:saveId/avatars/:filename
+```
+
+#### Music Files
+```bash
+# Get music file list
+GET /api/backend/music/:identifier
+
+# Stream music file
+GET /api/backend/music/:identifier/:filename
+```
+
+#### Debug Endpoints
+```bash
+# Get active SSE connections
+GET /api/backend/debug/connections
+
+# Get active NPC chat connections
+GET /api/backend/debug/npc-connections
+```
+
+### Health Check
+- `GET /health` - Server health status
+- `GET /` - API documentation and information
+
+### Postman Collection
+- [Test Collection](https://zhangznesta-786306.postman.co/workspace/ZHENG-ZHANG's-Workspace~d816af23-1908-4ff6-83f8-25fbc507b5e9/collection/49458710-aee8cfb4-89ec-4851-8f24-b9acb49196df?action=share&creator=49458710)
 
 ## Project Structure
 
 ```
 Interactive-fiction-backend/
 ├── controllers/
-│   ├── pdfController.js      # PDF upload and processing logic
-│   └── gameController.js      # Game session management
+│   ├── backendController.js          # Core game logic handlers
+│   └── sseController.js              # SSE streaming for real-time gameplay
 ├── services/
-│   ├── pdfService.js          # PDF parsing and extraction
-│   ├── gameSettingsService.js # Game settings extraction
-│   └── gameService.js         # Game logic and LLM integration
+│   ├── gameService.js                # Game session management & LLM integration
+│   ├── gameInitializationService.js  # Document processing & data extraction
+│   ├── statusService.js              # Player status tracking & updates
+│   ├── imageGenerationService.js     # AI image generation (DALL-E)
+│   ├── npcChatService.js            # NPC conversation system
+│   ├── novelWritingService.js       # Novel generation from gameplay
+│   ├── buildingInteractionService.js # Building feature interactions
+│   ├── pdfService.js                # PDF document parsing
+│   ├── docxService.js               # DOCX document parsing
+│   └── utils.js                     # JSON file operations & utilities
 ├── routes/
-│   ├── pdfRoutes.js           # PDF-related routes
-│   └── gameRoutes.js          # Game-related routes
+│   └── backendRoutes.js             # Game API routes
 ├── middleware/
-│   └── upload.js              # Multer file upload configuration
+│   ├── upload.js                    # Multer file upload configuration
+│   └── authMiddleware.js            # JWT authentication middleware
+├── login/
+│   ├── controllers/
+│   │   ├── authController.js        # User authentication handlers
+│   │   └── gamesController.js       # Games management handlers
+│   ├── services/
+│   │   ├── authService.js           # User CRUD operations (MySQL)
+│   │   ├── gamesService.js          # Game records management
+│   │   └── minioService.js          # MinIO object storage
+│   └── db/                          # Database migrations & schema
 ├── public/
-│   ├── index.html             # Frontend UI
-│   └── app.js                 # Frontend JavaScript
-├── uploads/                    # Uploaded PDF files
-├── server.js                  # Main server file
-├── package.json
-├── .env.example
+│   └── game_data/                   # Generated game data & sessions
+│       ├── [fileId]/                # Original game files
+│       │   ├── lore_[fileId].json
+│       │   ├── player_[fileId].json
+│       │   ├── items_[fileId].json
+│       │   ├── scenes_[fileId].json
+│       │   └── images/              # AI-generated images
+│       └── [sessionId]/             # Active game sessions
+│           ├── history_[sessionId].json
+│           ├── player_[sessionId].json
+│           └── [other session files]
+├── game_saves/                      # Pre-processed game packages
+│   └── [saveId]/                    # Complete game with assets
+│       ├── [JSON files]
+│       ├── avatars/
+│       ├── scenes/
+│       ├── icons/
+│       └── music/
+├── uploads/                         # Temporary uploaded files
+├── server.js                        # Main Express server
+├── package.json                     # Dependencies
+├── .env                            # Environment configuration
 └── README.md
 ```
 
-## PDF Format Guidelines
+## Technologies Used
 
-For best results, structure your PDF game settings with clear sections:
+### Backend Framework
+- **Express.js** - Web application framework
+- **CORS** - Cross-origin resource sharing
+- **Multer** - File upload handling
 
-```
-Game Title
+### AI & LLM
+- **Anthropic Claude AI** (@anthropic-ai/sdk) - Story generation & game logic
+- **OpenAI API** - Image generation (DALL-E)
 
-Description: Brief overview of the game world and story
+### Document Processing
+- **pdf-parse** - PDF text extraction
+- **mammoth** - DOCX to text conversion
 
-Characters:
-- Character Name: Description and backstory
-- Character Name: Description and backstory
+### Database & Storage
+- **MySQL** (mysql2) - User data & game records
+- **PostgreSQL** (pg) - Additional data storage
+- **Redis** - Caching & rate limiting
+- **MinIO** - Object storage for game assets
 
-Locations:
-- Location Name: Description of the place
-- Location Name: Description of the place
+### Authentication & Security
+- **JSON Web Tokens** (jsonwebtoken) - JWT authentication
+- **bcryptjs** - Password hashing
+- **Zod** - Schema validation
 
-Items:
-- Item Name: Description and properties
-- Item Name: Description and properties
+### Email
+- **Nodemailer** - Email sending (verification codes, notifications)
 
-Rules:
-1. Game rule or mechanic
-2. Game rule or mechanic
+### Image Processing
+- **Sharp** - Image resizing & optimization
 
-Action Options (Optional):
-Use **!! option text !!** markers to define predefined action options:
-**!! Study magic spells !!**
-**!! Train combat skills !!**
-**!! Explore the dungeon !!**
+### Development
+- **Nodemon** - Auto-restart during development
+- **dotenv** - Environment variable management
 
-Note: Action options marked with **!! !!** will be automatically extracted 
-and provided to the AI as suggested actions players can take.
+## Game Flow
 
-Narrative:
-Your full game narrative and story content...
-```
+### 1. Document Upload & Processing
+1. Upload PDF/DOCX via `/api/backend/pdf/upload-and-process`
+2. System extracts text from document
+3. Claude AI analyzes and generates 4 JSON files:
+   - **lore**: World background, player story, key events, game time
+   - **player**: Character profile, stats, inventory
+   - **items**: Item database (weapons, consumables, materials)
+   - **scenes**: World map, NPCs, buildings, exits
+4. Automatic image generation:
+   - World map
+   - Player portrait
+   - NPC avatars (parallel generation)
+   - Scene backgrounds (parallel generation)
+   - Building icons (parallel generation)
+5. Returns `fileId` for game initialization
 
-## Claude API Integration
+### 2. Session Creation
+1. Call `/api/backend/game/session/create` with `fileId` and `playerName`
+2. System creates isolated session directory
+3. Copies game files to session storage
+4. Initializes player status from template
+5. Returns `sessionId` and complete game data
 
-This project uses **Claude 3.5 Sonnet** for intelligent game narration. The integration is already complete!
+### 3. Game Initialization
+1. Send "开始游戏" (Start Game) action via streaming endpoint
+2. Claude AI receives comprehensive game context
+3. Generates opening narrative with action options
+4. Response streamed in real-time (SSE)
+5. System extracts actions and updates player status
+6. Conversation history persisted to disk
 
-### How It Works
+### 4. Gameplay Loop
+1. **Player Action** → User selects action or types custom input
+2. **LLM Processing** → Claude receives:
+   - Full game lore and world data
+   - Current player status
+   - Unlocked scenes (progressive exploration)
+   - Recent conversation history
+3. **Story Generation** → Claude generates narrative with:
+   - Story continuation
+   - Action options marked with `[ACTION: ...]`
+   - Implicit status changes
+4. **Status Update** → System automatically:
+   - Extracts attribute changes
+   - Updates inventory (add/remove items)
+   - Modifies character stats
+   - Unlocks new scenes with `[UNLOCK_SCENE: id]`
+   - Updates NPC memories
+5. **Persistence** → All changes saved to session files
+6. Loop continues until game conclusion
 
-1. **PDF Processing**: The system extracts game settings from your PDF
-2. **Game Initialization**: When you type "start game" or "开始游戏", Claude:
-   - Reads all the PDF content and settings
-   - Creates an immersive opening scene
-   - Sets up the game world based on PDF specifications
-   - Provides initial game state and options
+### 5. Additional Features
+- **NPC Chat**: Real-time conversations with context-aware NPCs
+- **Building Interactions**: Shop purchases, inn stays, guild quests
+- **Item Usage**: Direct item consumption from inventory
+- **Scene Navigation**: Move between unlocked locations
+- **Novel Generation**: Convert gameplay into formatted novels
+- **Session Recovery**: Automatic recovery after server restart
 
-3. **Interactive Gameplay**: As you play:
-   - Your actions are sent to Claude with full game context
-   - Claude maintains conversation history for continuity
-   - Responses follow PDF rules and settings
-   - Supports both Chinese and English interactions
+## Image Generation
 
-### API Configuration
+The system automatically generates contextual images based on game lore:
 
-The system uses:
-- **Model**: `claude-3-5-sonnet-20241022`
-- **Max Tokens**: 4096 per response
-- **Context**: Full PDF content + conversation history (last 20 messages) + character status
-- **Language**: Bilingual (Chinese/English)
-- **Status Updates**: Claude can modify character stats using special markers
+### Process
+1. **Context Extraction**: Reads `lore_[fileId].json` to understand:
+   - Historical era and time period
+   - Cultural and geographical setting
+   - Key events and atmosphere
+2. **Contextual Prompts**: Generates era-appropriate prompts:
+   ```
+   "A detailed portrait of [NPC name], a [age]-year-old [gender] [job]
+   in [era] during [time period], wearing period-accurate clothing..."
+   ```
+3. **Parallel Generation**: All images generated concurrently for performance
+4. **Image Processing**:
+   - Downloads from DALL-E API
+   - Resizes using Sharp:
+     - Avatars: 300px
+     - Scenes: 1000px
+     - Icons: 300px
+     - World/Player: 500px
+5. **Storage**: Saved to `public/game_data/images/[fileId]/`
+6. **JSON Updates**: Image URLs written back to `scenes_[fileId].json`
 
-### Status Update Format
+### Image Types
+- **World Map**: Bird's-eye view of game world
+- **Player Portrait**: Character portrait based on profile
+- **NPC Avatars**: Individual portraits for each character
+- **Scene Backgrounds**: Landscape images for locations
+- **Building Icons**: Interior scenes for structures
 
-Claude can update character status by including markers in responses:
+## Session Management
 
-```
-{{STATUS_UPDATE: {"character": {"health": 85}, "location": "Dark Cave"}}}
-```
+### Session Storage
+- **In-Memory**: Active sessions stored in Map during runtime
+- **Persistent**: JSON files on disk for durability
+- **Recovery**: Automatic recovery from disk after server restart
 
-**Example:**
-```
-你进入了黑暗的洞穴，遭遇了怪物！
-{{STATUS_UPDATE: {"character": {"health": 85, "money": 10}, "location": "黑暗洞穴"}}}
-你获得了 10 金币。
-```
+### Session Data
+Each session tracks:
+- Unique `sessionId` (32-character hex)
+- Source `fileId` (original game)
+- Player name and profile
+- Game state (location, inventory, health, flags)
+- Character status (stats, attributes, relationships)
+- Conversation history (last 20 messages)
+- Complete action history
+- Token usage statistics
 
-See `STATUS_SYSTEM.md` for complete documentation.
-
-### Smart Attribute Tracking
-
-The system now intelligently handles attribute changes:
-
-**How it works:**
-1. **Absolute Values**: When the LLM shows "力量: 50" or "力量：50/100", it stores 50 as the absolute value
-2. **Delta Values**: When the LLM shows "力量+2" or "获得经验：力量+2", it adds 2 to the current value
-3. **Combined Format**: When the LLM shows "力量:52(+2)", it stores 52 as the absolute value and recognizes +2 as the change
-
-**Example:**
-```
-Initial state: 直播技巧 = 0
-After action 1: "获得经验：直播技巧+2" → 直播技巧 = 2
-After action 2: "获得经验：直播技巧+3" → 直播技巧 = 5 (not 3!)
-After action 3: "直播技巧：8/100" → 直播技巧 = 8 (absolute value)
-```
-
-**Benefits:**
-- ✅ Cumulative progression tracking
-- ✅ Proper experience and skill growth
-- ✅ Supports both absolute and incremental updates
-- ✅ Works with any attribute format in Chinese or English
-
-All attributes are stored in JSON files at `game_saves/{sessionId}.json` and automatically updated after each game action.
-
-## Development
-
-### Running Tests
-```bash
-npm test
-```
-
-### Linting
-```bash
-npm run lint
-```
-
-## Security Considerations
-
-- File uploads are restricted to PDF files only
-- File size is limited (default 10MB)
-- Uploaded files are stored with random names
-- Add authentication/authorization for production use
-- Implement rate limiting for API endpoints
-- Sanitize user inputs before processing
-
-## Production Deployment
-
-1. Use a production-ready database (PostgreSQL, MongoDB) instead of in-memory storage
-2. Implement Redis for session management
-3. Add authentication and authorization
-4. Set up proper logging (Winston, Morgan)
-5. Configure HTTPS
-6. Use environment-specific configurations
-7. Implement file cleanup for old uploads
-8. Add monitoring and error tracking
-
-## License
-
-ISC
+### Features
+- **Progressive World Unlock**: Track locked/unlocked scenes
+- **Relationship System**: Monitor player-NPC relationships
+- **Achievement Tracking**: Record completed achievements
+- **Flag System**: Track story choices and branches
+- **Session Isolation**: Each session has independent state
+- **Pre-processed Games**: Support for packaged games with assets
 
 ## Contributing
 
 Contributions are welcome! Please feel free to submit a Pull Request.
+
+## License
+
+[Specify your license here]
+
+## Support
+
+For issues or questions, please open an issue on the GitHub repository.
 

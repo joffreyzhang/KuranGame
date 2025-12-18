@@ -1,17 +1,20 @@
 import Anthropic from '@anthropic-ai/sdk';
 import dotenv from 'dotenv';
-import { prepareGameSettingsForLLM } from './gameSettingsService.js';
+import {loadGameData, copyGameToSession, copyUploadedGameToSession } from './gameInitializationService.js';
+import {loadStatus, applyClaudeUpdates, initializeStatus, saveStatus} from './statusService.js';
+import { prepareGameDataForLLM } from './utils.js';
 import {
-  initializeStatus,
-  loadStatus,
-  saveStatus,
-  applyClaudeUpdates,
-  getStatusUpdatePrompt,
-  updateStatus,
-  extractActionOptions
-} from './statusService.js';
-import { analyzeAndUpdateGameData } from './gameDataUpdateService.js';
-import fs from 'fs';
+  loadMissions,
+  incrementTurnCount,
+  buildGameContext,
+  checkStorylineBlocked,
+  generateStoryMission
+} from './missionService.js';
+import { parseNarrativeSteps } from './narrativeParser.js';
+import { completeGameSessionByParams } from '../login/controller/gamesController.js';
+import { updateNPCMemoriesWithPlot } from './npcChatService.js';
+import { getStyleInstructions, getDefaultStyle, isValidStyle } from './literaryStyleService.js';
+import fsSync from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { dirname } from 'path';
@@ -22,11 +25,13 @@ dotenv.config();
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
+// Directory for storing game data files
+const GAME_DATA_DIR = path.join(__dirname, '..', 'public', 'game_data');
+const GAME_SAVES_DIR = path.join(__dirname, '..', 'game_saves');
+
 // Initialize Claude client
 console.log('🔍 GameService Environment Variables:');
 console.log('CLAUDE_API_KEY:', process.env.CLAUDE_API_KEY ? 'SET' : 'NOT SET');
-console.log('CLAUDE_BASE_URL:', process.env.CLAUDE_BASE_URL || 'NOT SET');
-
 const anthropic = new Anthropic({
   apiKey: process.env.CLAUDE_API_KEY,
   baseURL: process.env.CLAUDE_BASE_URL,
@@ -34,92 +39,244 @@ const anthropic = new Anthropic({
 
 // Store game sessions in memory (in production, use Redis or database)
 const gameSessions = new Map();
-const fileGameSettings = new Map(); // Store processed game settings by fileId
 
-export const createGameSession = async (sessionId, fileId, playerName = 'Player') => {
+export function recoverSession(sessionId) {
+  console.log(`🔄 Attempting to recover session: ${sessionId}`);
+
+  try {
+    // Check if session directory exists
+    const sessionDir = path.join(GAME_DATA_DIR, sessionId);
+    if (!fsSync.existsSync(sessionDir)) {
+      console.log(`❌ Session directory not found: ${sessionDir}`);
+      return null;
+    }
+
+    // Load manifest to determine if this is a pre-processed game
+    const manifestPath = path.join(sessionDir, 'manifest.json');
+    let isPreProcessed = false;
+    let sourceFileId = null;
+
+    if (fsSync.existsSync(manifestPath)) {
+      const manifest = JSON.parse(fsSync.readFileSync(manifestPath, 'utf-8'));
+      if (manifest.session?.sourceFileId) {
+        isPreProcessed = true;
+        sourceFileId = manifest.session.sourceFileId;
+        console.log(`📦 Detected pre-processed game session. Source: ${sourceFileId}`);
+      }
+    }
+
+    // Load player status
+    const characterStatus = loadStatus(sessionId);
+    if (!characterStatus) {
+      console.log(`❌ Player status not found for session: ${sessionId}`);
+      return null;
+    }
+    const history = loadSessionHistory(sessionId);
+
+    // Rebuild conversation history from saved history for Claude context
+    const conversationHistory = [];
+    for (const entry of history) {
+      if (entry.type === 'player') {
+        conversationHistory.push({
+          role: 'user',
+          content: entry.message
+        });
+      } else if (entry.type === 'game') {
+        conversationHistory.push({
+          role: 'assistant',
+          content: entry.message
+        });
+      }
+    }
+
+    // Keep only the last 20 messages to avoid token overflow
+    const trimmedConversationHistory = conversationHistory.length > 20
+      ? conversationHistory.slice(-20)
+      : conversationHistory;
+
+    console.log(`📜 Rebuilt conversation history: ${trimmedConversationHistory.length} messages`);
+
+    // Load literary style from manifest
+    let literaryStyle = getDefaultStyle();
+    if (fsSync.existsSync(manifestPath)) {
+      const manifest = JSON.parse(fsSync.readFileSync(manifestPath, 'utf-8'));
+      if (manifest.session?.literaryStyle && isValidStyle(manifest.session.literaryStyle)) {
+        literaryStyle = manifest.session.literaryStyle;
+      }
+    }
+
+    // Reconstruct session object
+    const session = {
+      sessionId,
+      fileId: sourceFileId || sessionId, // Use sourceFileId if available, otherwise sessionId
+      sourceFileId: sourceFileId || sessionId,
+      isPreProcessed,
+      playerName: characterStatus.data?.profile?.name || 'Player',
+      literaryStyle,  // Add literary style
+      characterStatus,
+      gameState: {
+        currentLocation: characterStatus.data?.location || 'start',
+        inventory: characterStatus.data?.inventory || [],
+        progress: {},
+        flags: characterStatus.data?.flags || {},
+        health: characterStatus.data?.stats?.health || 100,
+        createdAt: characterStatus.createdAt || new Date().toISOString(),
+        isInitialized: history.length > 0
+      },
+      history,
+      conversationHistory: trimmedConversationHistory,
+      tokenUsage: {
+        totalInputTokens: 0,
+        totalOutputTokens: 0,
+        totalTokens: 0,
+        apiCalls: 0
+      }
+    };
+
+    // Store in memory
+    gameSessions.set(sessionId, session);
+    console.log(`✅ Session recovered successfully`);
+
+    return session;
+  } catch (error) {
+    console.error(`❌ Error recovering session:`, error);
+    return null;
+  }
+}
+
+export function saveSessionHistory(sessionId, history) {
+  // Save to session directory
+  const sessionDir = path.join(GAME_DATA_DIR, sessionId);
+  const historyPath = path.join(sessionDir, `history_${sessionId}.json`);
+
+  try {
+    // Ensure session directory exists
+    if (!fsSync.existsSync(sessionDir)) {
+      fsSync.mkdirSync(sessionDir, { recursive: true });
+    }
+
+    const historyData = {
+      sessionId,
+      history: history || [],
+      lastUpdated: new Date().toISOString(),
+      totalMessages: (history || []).length
+    };
+    fsSync.writeFileSync(historyPath, JSON.stringify(historyData, null, 2), 'utf-8');
+    console.log(`💾 History saved: ${history?.length || 0} messages`);
+  } catch (error) {
+    console.error('Error saving session history:', error);
+  }
+}
+
+function loadSessionHistory(sessionId) {
+  // Load from session directory
+  const sessionDir = path.join(GAME_DATA_DIR, sessionId);
+  const historyPath = path.join(sessionDir, `history_${sessionId}.json`);
+
+  if (fsSync.existsSync(historyPath)) {
+    try {
+      const data = fsSync.readFileSync(historyPath, 'utf-8');
+      const historyData = JSON.parse(data);
+      return historyData.history || [];
+    } catch (error) {
+      console.error('Error loading session history:', error);
+      return [];
+    }
+  }
+  return [];
+}
+
+export const createGameSession = async (sessionId, fileId, playerName = 'Player', literaryStyle = null) => {
   console.log('\n=== 🎮 CREATE GAME SESSION ===');
   console.log('Session ID:', sessionId);
   console.log('File ID:', fileId);
-  console.log('Player Name:', playerName);
 
-  let gameSettings = fileGameSettings.get(fileId);
+  // Validate and set literary style
+  const style = (literaryStyle && isValidStyle(literaryStyle)) ? literaryStyle : getDefaultStyle();
+  console.log('Literary Style:', style);
 
-  // Try to load from disk if not in memory
-  if (!gameSettings) {
-    gameSettings = loadGameSettings(fileId);
-    if (gameSettings) {
-      fileGameSettings.set(fileId, gameSettings);
-    } else {
-      throw new Error('Game settings not found. Please process a PDF file first.');
+  // Check if fileId exists in game_saves directory
+  const gameSavePath = path.join(GAME_SAVES_DIR, fileId);
+  const isPreProcessed = fsSync.existsSync(gameSavePath);
+  
+  if (isPreProcessed) {
+    console.log(`📦 Found pre-processed game in game_saves/${fileId}`);
+    console.log('🔄 Copying game files to session directory...');
+
+    // Copy files from game_saves to session directory
+    copyGameToSession(fileId, sessionId);
+  } else {
+    console.log('🔄 Copying uploaded game files to session directory...');
+    copyUploadedGameToSession(fileId, sessionId);
+  }
+
+  // Load game data - now supporting both session directory and legacy fileId
+  const gameData = loadGameData(isPreProcessed ? sessionId : fileId, isPreProcessed);
+  if (!gameData) {
+    throw new Error('Game data not found. Please process a document file first.');
+  }
+  playerName = gameData.playerData.profile.name;
+  // Get initial location from first scene in scenes data
+  playerName = gameData.playerData.profile.name;
+  let initialLocation = 'start';
+  if (gameData && gameData.worldData) {
+    const sceneIds = Object.keys(gameData.worldData);
+    if (sceneIds.length > 0) {
+      initialLocation = sceneIds[0];
+      console.log(`🏠 Initial location determined: ${initialLocation} (${gameData.worldData[initialLocation].name})`);
     }
   }
 
-  // Initialize character status with PDF attributes
-  const initialAttributes = gameSettings.initialAttributes || {};
-  const initialItems = gameSettings.initialItems || [];
-
-  console.log('📊 Initial attributes from PDF:', initialAttributes);
-  console.log('🎒 Initial items from PDF:', initialItems);
-
-  // Initialize character status with PDF data
-  const characterStatus = initializeStatus(sessionId, initialAttributes);
-
-  // Update character name
-  characterStatus.character.name = playerName;
-
-  // Add initial items to inventory
-  initialItems.forEach(item => {
-    const itemWithId = {
-      id: `item_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
-      name: item.name,
-      description: item.description,
-      quantity: item.quantity || 1,
-      value: item.value || 0,
-      addedAt: new Date().toISOString(),
-      ...item
-    };
-    characterStatus.inventory.push(itemWithId);
-  });
-
+  // Initialize character status
+  const characterStatus = initializeStatus(sessionId, fileId, initialLocation);
   saveStatus(sessionId, characterStatus);
   console.log('✅ Character status initialized and saved');
+
+  // Save literary style to manifest
+  const sessionDir = path.join(GAME_DATA_DIR, sessionId);
+  const manifestPath = path.join(sessionDir, 'manifest.json');
+  let manifest = {};
+  if (fsSync.existsSync(manifestPath)) {
+    manifest = JSON.parse(fsSync.readFileSync(manifestPath, 'utf-8'));
+  }
+  manifest.session = manifest.session || {};
+  manifest.session.literaryStyle = style;
+  manifest.session.lastUpdated = new Date().toISOString();
+  fsSync.writeFileSync(manifestPath, JSON.stringify(manifest, null, 2), 'utf-8');
+  console.log(`✅ Literary style saved to manifest: ${style}`);
 
   const session = {
     sessionId,
     fileId,
-    playerName,
-    gameSettings,
-    characterStatus, // Add status to session
+    sourceFileId: gameData.sourceFileId || fileId,
+    isPreProcessed,
+    playerName, // Add status to session
+    literaryStyle: style,  // Add literary style
     gameState: {
-      currentLocation: 'start',
+      currentLocation: initialLocation,
       inventory: [],
-      progress: {},
-      flags: {},
       health: 100,
       createdAt: new Date().toISOString(),
       isInitialized: false
     },
     history: [],
-    conversationHistory: [] // Store Claude conversation history
+    conversationHistory: [], // Store Claude conversation history
+    tokenUsage: {
+      totalInputTokens: 0,
+      totalOutputTokens: 0,
+      totalTokens: 0,
+      apiCalls: 0
+    }
   };
-
   gameSessions.set(sessionId, session);
 
   // Persist session to allow recovery
-  saveSessionMetadata(sessionId, {
-    fileId,
-    playerName,
-    createdAt: new Date().toISOString(),
-    isInitialized: false,
-    conversationHistory: []
-  });
-
   return session;
 };
 
-export const processPlayerAction = async (sessionId, action) => {
+export const processPlayerAction = async (sessionId, action, onChunk = null) => {
   let session = gameSessions.get(sessionId);
-  
+
   // Try to recover session if not found in memory
   if (!session) {
     session = recoverSession(sessionId);
@@ -127,17 +284,19 @@ export const processPlayerAction = async (sessionId, action) => {
       throw new Error('Session not found. Please start a new game.');
     }
   }
-
   // Check if this is a game initialization command
   const initCommands = ['start game', '开始游戏', 'start', '开始'];
-  const isInitCommand = initCommands.some(cmd => 
+  const isInitCommand = initCommands.some(cmd =>
     action.toLowerCase().trim() === cmd.toLowerCase()
   );
 
+  // Determine if we should use streaming
+  const useStreaming = !!onChunk;
+
   if (isInitCommand && !session.gameState.isInitialized) {
-    // Initialize the game with Claude
-    const response = await initializeGameWithClaude(session);
-    
+    console.log('Start the First Round...');
+    const response = await callClaudeAPI(session, '开始游戏！请展示初始设定并开始剧情。', useStreaming, onChunk);
+
     session.gameState.isInitialized = true;
     session.history.push({
       type: 'player',
@@ -154,35 +313,65 @@ export const processPlayerAction = async (sessionId, action) => {
     const updatedStatus = await applyClaudeUpdates(sessionId, response.message);
     session.characterStatus = updatedStatus;
 
-    // Extract action options for initial response
-    const actionOptions = extractActionOptions(response.message);
+    // Parse narrative steps from response
+    const narrativeData = parseNarrativeSteps(response.message);
 
-    // Update structured game data files (NEW - Initial game state)
-    await analyzeAndUpdateGameData(session.fileId, sessionId, response.message, action);
-    // Persist the initialized state and conversation history
-    saveSessionMetadata(sessionId, {
-      fileId: session.fileId,
-      playerName: session.playerName,
-      createdAt: session.gameState.createdAt,
-      isInitialized: true,
-      conversationHistory: session.conversationHistory
-    });
+    // Extract choices from steps
+    const choiceSteps = narrativeData.steps.filter(step => step.type === 'choice');
+    const actionOptions = choiceSteps.length > 0 ? choiceSteps[0].options : null;
 
+    // Persist session history to file
+    saveSessionHistory(sessionId, session.history);
+
+    try {
+      const fileId = session.sourceFileId || session.fileId;
+      await completeGameSessionByParams(sessionId, 'public/game_data', fileId);
+      console.log(`✅ Session data uploaded to MinIO: ${sessionId}`);
+    } catch (uploadError) {
+      console.error('[MinIO Upload] Failed to upload session data:', uploadError.message);
+    }
     return {
       response: response.message,
       gameState: session.gameState,
       characterStatus: updatedStatus,
+      narrativeSteps: narrativeData.steps,
       actionOptions,
       isInitialized: true
     };
   }
 
-  if (!session.gameState.isInitialized) {
+  // Check if storyline is blocked by an active story mission
+  const storylineStatus = checkStorylineBlocked(sessionId);
+  if (storylineStatus.blocked) {
+    console.log(`[Story Mission] Storyline is BLOCKED by mission: ${storylineStatus.mission.title}`);
+
     return {
-      response: 'Please start the game first by typing "start game" or "开始游戏"',
+      response: `当前主线剧情已暂停。\n\n【任务：${storylineStatus.mission.title}】\n${storylineStatus.mission.description}\n\n请完成任务目标后点击"提交任务"按钮继续剧情。`,
       gameState: session.gameState,
-      isInitialized: false
+      characterStatus: session.characterStatus,
+      storylineBlocked: true,
+      blockingMission: storylineStatus.mission,
+      isInitialized: true
     };
+  }
+
+  // PRE-CHECK: Determine if we should force [MISSION: true] marker in Claude's response
+  let shouldForceMissionMarker = false;
+  try {
+    const missionData = loadMissions(sessionId);
+      // Calculate turns since last story mission
+    const lastStoryMission = [...missionData.missions]
+      .reverse()
+      .find(m => m.isStoryMission);
+
+    const turnsSinceLastMission = lastStoryMission ? missionData.turnCount - (lastStoryMission.createdTurn || 0) : missionData.turnCount; // Use actual turn count, not 999
+    console.log(`[Story Mission] : ${turnsSinceLastMission} turns`)
+    shouldForceMissionMarker = turnsSinceLastMission >= 10;
+    if (shouldForceMissionMarker) {
+      console.log(`[Story Mission] PRE-CHECK: Will force [MISSION: true] marker (${turnsSinceLastMission} turns since last mission)`);
+    }
+  } catch (error) {
+    console.error('[Mission Pre-Check] Error checking for force-generation:', error);
   }
 
   // Add player action to history
@@ -192,8 +381,8 @@ export const processPlayerAction = async (sessionId, action) => {
     timestamp: new Date().toISOString()
   });
 
-  // Generate response using Claude
-  const response = await generateGameResponse(session, action);
+  // Generate response using Claude (with optional streaming)
+  const response = await callClaudeAPI(session, action, useStreaming, onChunk, shouldForceMissionMarker);
 
   // Add response to history
   session.history.push({
@@ -202,33 +391,76 @@ export const processPlayerAction = async (sessionId, action) => {
     timestamp: new Date().toISOString()
   });
 
-  // Update game state based on action
-  updateGameState(session, action, response);
-
-  // Parse and apply status updates from Claude's response (now async)
   const updatedStatus = await applyClaudeUpdates(sessionId, response.message);
   session.characterStatus = updatedStatus;
+  const narrativeData = parseNarrativeSteps(response.message);
+  const choiceSteps = narrativeData.steps.filter(step => step.type === 'choice');
+  const actionOptions = choiceSteps.length > 0 ? choiceSteps[0].options : null;
 
-  // Extract action options for the frontend to render as buttons
-  const actionOptions = extractActionOptions(response.message);
+  await updateNPCMemoriesWithPlot(sessionId, response.message);
 
-  // Update structured game data files (NEW - Update background/player/items/world JSON files)
-  await analyzeAndUpdateGameData(session.fileId, sessionId, response.message, action);
+  // UPDATE MISSION SYSTEM - Check for completed missions and generate new ones
+  let newStoryMission = null;
 
-  // Persist the conversation history after each action
-  saveSessionMetadata(sessionId, {
-    fileId: session.fileId,
-    playerName: session.playerName,
-    createdAt: session.gameState.createdAt,
-    isInitialized: true,
-    conversationHistory: session.conversationHistory
-  });
+  try {
+    // Increment turn count for mission tracking
+    incrementTurnCount(sessionId);
+    const gameData = loadGameData(session.isPreProcessed ? sessionId : session.fileId, session.isPreProcessed);
+    const gameContext = buildGameContext(sessionId, session, gameData, updatedStatus);
+
+    // Check if narrative indicates a story mission should be triggered
+    const shouldTriggerStoryMission = narrativeData.shouldGenerateMission || false;
+
+    if (shouldTriggerStoryMission) {
+      console.log('[Story Mission] [MISSION: true] tag detected in narrative response');
+
+      const missionData = loadMissions(sessionId);
+        // Calculate turns since last story mission for cooldown check
+      const lastStoryMission = [...missionData.missions]
+        .reverse()
+        .find(m => m.isStoryMission);
+
+      const turnsSinceLastMission = lastStoryMission? missionData.turnCount - (lastStoryMission.createdTurn || 0) : 999;
+      // Minimum cooldown: at least 3 turns since last story mission
+      if (turnsSinceLastMission >= 3) {
+        newStoryMission = await generateStoryMission(
+          sessionId,
+          updatedStatus,
+          gameContext,
+          response.message
+        );
+
+        if (newStoryMission) {
+          console.log(`[Story Mission] Generated: ${newStoryMission.title}`);
+        }
+      } else {
+        console.log(`[Story Mission] Cooldown active: only ${turnsSinceLastMission} turns since last mission (need 3)`);
+      }
+    }
+  } catch (error) {
+    console.error('[Mission System] Error updating missions:', error);
+  }
+
+  // Persist session history to file
+  saveSessionHistory(sessionId, session.history);
+
+  // Upload session data to MinIO (after all updates are complete)
+  try {
+    const fileId = session.sourceFileId || session.fileId;
+    await completeGameSessionByParams(sessionId, 'public/game_data', fileId);
+    console.log(`✅ Session data uploaded to MinIO: ${sessionId}`);
+  } catch (uploadError) {
+    console.error('[MinIO Upload] Failed to upload session data:', uploadError.message);
+    // Don't throw - upload errors shouldn't break the game
+  }
 
   return {
     response: response.message,
     gameState: session.gameState,
     characterStatus: updatedStatus,
-    actionOptions
+    narrativeSteps: narrativeData.steps,
+    actionOptions,
+    newMission: newStoryMission // Include the generated story mission if any
   };
 };
 
@@ -236,574 +468,327 @@ export const getSession = (sessionId) => {
   return gameSessions.get(sessionId);
 };
 
-export const storeGameSettings = (fileId, gameSettings) => {
-  fileGameSettings.set(fileId, gameSettings);
-};
+async function callClaudeAPI(session, action, useStreaming = false, onChunk = null, shouldForceMissionMarker = false) {
+  // Use sessionId for prepareGameDataForLLM if session is from pre-processed game
+  const identifier = session.isPreProcessed ? session.sessionId : session.fileId;
+  const isSessionId = session.isPreProcessed;
 
-/**
- * Persist game settings to disk
- */
-export const persistGameSettings = (fileId, gameSettings) => {
-  const settingsPath = path.join(__dirname, '..', 'game_saves', `settings_${fileId}.json`);
-  try {
-    fs.writeFileSync(settingsPath, JSON.stringify(gameSettings, null, 2), 'utf-8');
-  } catch (error) {
-    console.error('Error persisting game settings:', error);
-  }
-};
+  const status = loadStatus(session.sessionId);
+  const unlockedScenes = status?.unlockedScenes || null;
+  const gamePrompt = prepareGameDataForLLM(identifier, isSessionId, unlockedScenes);
 
-/**
- * Load game settings from disk
- */
-export const loadGameSettings = (fileId) => {
-  const settingsPath = path.join(__dirname, '..', 'game_saves', `settings_${fileId}.json`);
-  if (fs.existsSync(settingsPath)) {
-    try {
-      const data = fs.readFileSync(settingsPath, 'utf-8');
-      return JSON.parse(data);
-    } catch (error) {
-      console.error('Error loading game settings:', error);
-      return null;
-    }
-  }
-  return null;
-};
+  const missionData = loadMissions(session.sessionId);
+  const recentlyCompletedMissions = missionData.missions.filter(m =>
+    m.status === 'completed' &&
+    m.completedTurn !== undefined &&
+    missionData.turnCount - m.completedTurn <= 1 // Completed in last turn or current turn
+  );
 
-/**
- * Initialize game with Claude API
- */
-async function initializeGameWithClaude(session) {
-  try {
-    const gamePrompt = prepareGameSettingsForLLM(session.gameSettings);
-    const status = loadStatus(session.sessionId);
-    const statusPrompt = getStatusUpdatePrompt(status);
-    
-    const systemPrompt = `你是一个专业的互动小说游戏主持人（Game Master）。你将基于以下PDF文档中的设定来主持一个互动小说游戏。
+  let missionCompletionPrompt = '';
+  if (recentlyCompletedMissions.length > 0) {
+    missionCompletionPrompt = `
+##  最近完成的任务 (Recently Completed Missions)
 
-游戏设定内容：
-${gamePrompt}
+玩家刚刚完成了以下任务，请在你的回复中：
+1. 庆祝玩家的成就
+2. 继续主线剧情
+3. 根据任务完成的方式自然地推进故事
 
-${statusPrompt}
-
-你的职责：
-1. 严格遵循PDF中提供的所有设定、规则和框架
-2. 根据PDF要求生成相应的可视化板块和模块（如人物面板、时间、地点、热搜等）
-3. 用生动、细腻的文笔描述剧情，营造沉浸式体验
-4. 根据玩家的选择和行动推进剧情发展
-5. 支持中英文双语交互
-6. 保持剧情连贯性和逻辑性
-7. 当游戏事件影响角色状态时，在回复中包含状态更新标记
-
-**重要：行动选项格式规范**
-在每次回复的结尾，你必须提供玩家可以选择的行动选项。
-使用以下特殊格式来标记行动选项（每个选项独占一行）：
-[ACTION: 选项描述文本]
-
-示例：
-[ACTION: 探索神秘的森林深处]
-[ACTION: 与村长交谈了解更多信息]
-[ACTION: 在旅馆休息恢复体力]
-
-注意：
-- 每个行动选项必须使用 [ACTION: ...] 格式
-- 每个选项独占一行
-- 通常提供3-5个选项
-- 选项要具体、可操作
-- 不要在其他地方使用这个格式
-
-现在，请根据PDF设定，开始这个互动小说游戏。请：
-1. 展示初始设定（时间、地点、相关信息板块等）
-2. 介绍游戏背景和当前情境
-3. 给玩家提供可选的行动选项（使用[ACTION: ...]格式）
-
-请用中文回复，语言要生动有趣。`;
-
-    const message = await anthropic.messages.create({
-      model: 'gemini-2.5-pro',
-      max_tokens: 10000,
-      system: systemPrompt,
-      messages: [
-        {
-          role: 'user',
-          content: '开始游戏！请展示初始设定并开始剧情。'
+`;
+    recentlyCompletedMissions.forEach(mission => {
+      missionCompletionPrompt += `### 任务：${mission.title}\n`;
+      missionCompletionPrompt += `描述：${mission.description}\n`;
+      if (mission.completedViaPath) {
+        const path = mission.completionPaths?.find(p => p.pathId === mission.completedViaPath);
+        if (path) {
+          missionCompletionPrompt += `完成方式：${path.name} - ${path.description}\n`;
         }
-      ]
+      }
+      missionCompletionPrompt += `完成时间：${mission.completedAt}\n\n`;
     });
-
-    const responseText = message.content[0].text;
-    
-    // Store conversation in session
-    session.conversationHistory = [
-      {
-        role: 'user',
-        content: '开始游戏！请展示初始设定并开始剧情。'
-      },
-      {
-        role: 'assistant',
-        content: responseText
-      }
-    ];
-    
-    return {
-      message: responseText,
-      metadata: {
-        model: message.model,
-        usage: message.usage
-      }
-    };
-  } catch (error) {
-    console.error('Claude API error:', error);
-    throw new Error(`Failed to initialize game with Claude: ${error.message}`);
   }
-}
 
-/**
- * Generate game response using Claude API
- */
-async function generateGameResponse(session, action) {
-  try {
-    const gamePrompt = prepareGameSettingsForLLM(session.gameSettings);
-    const status = loadStatus(session.sessionId);
-    const statusPrompt = getStatusUpdatePrompt(status);
-    
-    const systemPrompt = `你是一个专业的互动小说游戏主持人（Game Master）。你正在主持一个基于以下设定的互动小说游戏。
+  // Add forced mission generation instruction if needed
+  let forcedMissionInstruction = '';
+  if (shouldForceMissionMarker) {
+    forcedMissionInstruction = `
+## ⚠️ CRITICAL INSTRUCTION - 强制任务生成
+
+系统检测到玩家已经很久没有收到主线任务了。你**必须**在本次回复中：
+1. **在回复的最开头添加 [MISSION: true] 标记**（这是强制要求）
+2. 创造一个重要的剧情转折或危机，为即将生成的任务做铺垫
+3. **不要**包含 [CHOICE]、[OPTION]、[END_CHOICE] 标记
+4. 用富有戏剧性的叙事引入这个关键时刻
+
+示例格式：
+[MISSION: true]
+[NARRATION: 你的叙事文本...]
+[DIALOGUE: NPC名字, "对话..."]
+[HINT: 提示文本...]
+
+**记住：必须以 [MISSION: true] 开头，不要添加任何选项。**
+`;
+    console.log('[Force Mission] Injecting forced mission instruction into system prompt');
+  }
+
+  // Get literary style instructions
+  const literaryStyle = session.literaryStyle || getDefaultStyle();
+  const styleInstructions = getStyleInstructions(literaryStyle);
+  console.log(`[Literary Style] Using style: ${literaryStyle}`);
+
+  const systemPrompt = `你是一个专业的互动小说游戏主持人（Game Master）。你正在主持一个基于以下设定的互动小说游戏。
 
 游戏设定内容：
 ${gamePrompt}
 
-${statusPrompt}
+${missionCompletionPrompt}
 
 你的职责：
-1. 严格遵循PDF中提供的所有设定、规则和框架
-2. 根据PDF要求生成相应的可视化板块和模块
-3. 根据玩家的行动推进剧情
-4. 保持剧情的连贯性和逻辑性
-5. 用生动、细腻的文笔描述场景和事件
-6. 支持中英文双语交互
-7. 当游戏事件影响角色状态时（如战斗受伤、获得物品、花费金钱、移动位置等），在回复中包含状态更新标记
+1. 严格遵循游戏设定内容
+2. 根据玩家的行动推进剧情
+3. 保持剧情的连贯性和逻辑性
+4. 用生动、细腻的文笔描述场景和事件
 
-**重要：行动选项格式规范**
-在每次回复的结尾，你必须提供玩家可以选择的行动选项。
-使用以下特殊格式来标记行动选项（每个选项独占一行）：
+# 📖 文学风格要求 (LITERARY STYLE REQUIREMENTS)
 
-[ACTION: 选项描述文本]
+**你必须严格遵循以下文学风格进行叙述：**
 
-示例：
-[ACTION: 探索神秘的森林深处]
-[ACTION: 与村长交谈了解更多信息]
-[ACTION: 在旅馆休息恢复体力]
+${styleInstructions}
 
-注意：
-- 每个行动选项必须使用 [ACTION: ...] 格式
-- 每个选项独占一行
-- 通常提供3-5个选项
-- 选项要具体、可操作
-- 不要在其他地方使用这个格式
-- 即使使用编号列表描述情况，行动选项也必须使用 [ACTION: ...] 格式
+**重要提醒：**
+- 所有叙述、对话、描写都必须符合上述文学风格
+- 即使使用结构化标记（[NARRATION]、[DIALOGUE]等），标记内的文本也必须遵循该风格
+- 保持风格的一致性，不要在同一回合中混用不同风格
 
-请根据玩家的行动，继续推进游戏剧情。`;
+**重要：叙事结构格式 (Narrative Structure Format)**
+你的回复必须按照传统RPG游戏的叙事结构，分为以下几种步骤类型：
 
-    // Build conversation history for Claude
-    const messages = [...session.conversationHistory];
-    
-    // Add current action
-    messages.push({
-      role: 'user',
-      content: action
-    });
+1. **旁白叙述 (Narration)** - 场景描述、环境变化、事件发展
+   格式: [NARRATION: 旁白文本]
+   示例: [NARRATION: 残月沉入黑森林的尽头，杜恩要塞的号角在夜色中拉响。]
 
-    const message = await anthropic.messages.create({
-      model: 'gemini-2.5-pro',
-      max_tokens: 10000,
+2. **NPC对话 (Dialogue)** - NPC的台词
+   格式: [DIALOGUE: 角色名字, "对话内容"]
+   示例: [DIALOGUE: 艾德里安, "星图已经明示：在第一缕阳光照进王冠遗址前，我们必须抵达。"]
+
+3. **提示和状态变化 (Hint)** - 重要提示和角色属性、道具变化、npc关系变化
+   格式: [HINT: 提示文本]
+          [CHANGE: 玩家姓名, 属性名, +/-数值]
+          [CHANGE: RELATIONSHIP, NPC名字, +/-数值]
+          [CHANGE: 道具名称, 获得/丢失, 获得数量]
+   示例: [HINT: 艾德里安双手接过光焰剑，勇气升腾。]
+          [CHANGE: 玩家姓名, 勇气, +1]
+          [CHANGE: 光焰剑, 获得, 1]
+          [CHANGE: RELATIONSHIP, 艾德里安, +10]
+
+4. **选择分支 (Choice)** - 玩家的行动选项
+   格式: [CHOICE: 选择标题]
+          选择的描述文本
+          [OPTION: 选项1文本]
+          [OPTION: 选项2文本]
+          [END_CHOICE]
+   示例: [CHOICE: 前路抉择]
+          古道分出两条路线：阳光山道通向王冠祭坛，暗影林地直指失落王城。
+          [OPTION: 踏上阳光山道，沿着古老的雕纹前进。]
+          [OPTION: 潜入暗影林地，借迷雾遮蔽行踪。]
+          [END_CHOICE]
+
+**叙事顺序规则：**
+1. 开场使用旁白设置场景氛围
+2. 穿插NPC对话推进剧情
+3. 在关键事件后用旁白描述环境变化
+4. 重要物品获得或属性变化使用HINT
+5. 最后提供CHOICE让玩家决策
+
+**游戏初始化规则（CRITICAL - Game Initialization Rules）：**
+当玩家刚开始游戏时，**不要**输出以下内容：
+-不要输出游戏标题、分隔线、设定说明
+-不要逐行列出角色状态（姓名、年龄、性别、职业、等级、生命值、能量、金币等）
+-不要逐条列出初始物品清单
+-不要输出任何markdown格式的表格、列表、标题
+
+玩家状态由系统自动管理，你只需要：
+直接开始故事叙述（使用[NARRATION]）
+在故事中自然地提及关键背景信息
+正常使用[DIALOGUE]、[HINT]、[CHOICE]推进剧情
+
+正确的游戏开场示例：
+[NARRATION: 显庆五年，六月初四。襄州城笼罩在盛夏的热浪之中，汉水波光粼粼，码头上南来北往的船只络绎不绝。蝉鸣声从城外的梧桐林中传来，与市集的喧嚣交织成一曲盛世之音。]
+[NARRATION: 杜氏宅邸书房内，檀香袅袅。你伏案研读《春秋左传》，窗外阳光透过竹帘洒在书页上，形成斑驳的光影。忽然，一阵急促的脚步声打破了宁静。]
+[DIALOGUE: 小厮春儿, "三公子！三公子！货栈的赵执事来了，说有要紧事禀报！"]
+[NARRATION: 你抬起头，墨迹未干的毛笔悬在半空。透过窗棂，可以看见赵三在院中来回踱步，神色焦虑。]
+[CHOICE: 如何应对？]
+你该如何行动？
+[OPTION: 立即放下书卷，前去会见赵执事]
+[OPTION: 先派春儿稳住赵执事，自己整理好书案后再从容前往]
+[OPTION: 让赵执事稍候，赶往州学上课]
+[END_CHOICE]
+
+**场景解锁机制 (Scene Unlock System)**
+- 在HINT中说明解锁新场景时，添加：[UNLOCK_SCENE: scene_id]
+- 示例: [HINT: 守卫点了点头，为你打开了通往北方森林的大门。]
+         [UNLOCK_SCENE: northern_forest]
+
+**任务生成标记 (Mission Generation Tag)**
+- 当剧情出现重大转折、危机或需要玩家完成明确目标时，在回复最开头添加：[MISSION: true]
+- 当剧情正常推进、无需生成任务时，不需要添加任何标记
+- 不要频繁使用 [MISSION: true]，只在真正关键的故事节点使用（大约每3-5轮对话一次）
+- 如果[MISSION: true]出现，不要使用[CHOICE][OPTION][END_CHOICE]
+
+${forcedMissionInstruction}
+
+**完整示例：**
+[NARRATION: 残月沉入黑森林的尽头，杜恩要塞的号角在夜色中拉响。灰烬王冠的传说再次在火光中醒来。]
+[DIALOGUE: 艾德里安, "又是这样的梦……赛琳娜，我们真的要在黎明前就出发吗？"]
+[HINT: 艾德里安双手接过光焰剑，勇气升腾。]
+[CHANGE: 艾德里安, 勇气, +1]
+[CHOICE: 前路抉择]
+古道分出两条路线：阳光山道通向王冠祭坛，暗影林地直指失落王城。你们将如何前行？
+[OPTION: 踏上阳光山道，沿着古老的雕纹前进。]
+[OPTION: 潜入暗影林地，借迷雾遮蔽行踪。]
+[END_CHOICE]
+
+如果  [MISSION: true]
+则示例为：
+[MISSION: true]
+[NARRATION: 残月沉入黑森林的尽头，杜恩要塞的号角在夜色中拉响。灰烬王冠的传说再次在火光中醒来。]
+[DIALOGUE: 艾德里安, "又是这样的梦……赛琳娜，我们真的要在黎明前就出发吗？"]
+[HINT: 艾德里安双手接过光焰剑，勇气升腾。]
+[CHANGE: 艾德里安, 勇气, +1]
+
+**注意事项：**
+- 每个步骤独占一行或多行（对于CHOICE）
+- character_id必须是游戏中实际存在的NPC ID或玩家自己扮演的角色
+- 对话内容必须用双引号包裹
+- 选择选项通常3-5个，要具体可操作
+- 所有文本必须是中文
+- 禁止输出游戏标题、章节标题、分隔线（---、===等）
+- 禁止输出任何markdown格式的表格、列表、标题（#、##、**等）
+
+请根据玩家的行动，用上述格式继续推进游戏剧情。`;
+
+  // Build conversation history for Claude
+  const messages = [...session.conversationHistory];
+  const trimmedConversationHistory = session.conversationHistory.slice(-20);
+
+  // Add current action
+  messages.push({
+    role: 'user',
+    content: action
+  });
+
+  if (useStreaming) {
+      // Streaming mode
+    console.log('🚀 Calling Claude API (Streaming mode)...');
+    const stream = await anthropic.messages.create({
+      model: 'claude-sonnet-4-5-20250929',
+      max_tokens: 12000,
       system: systemPrompt,
-      messages: messages
+      messages: trimmedConversationHistory,
+      stream: true
     });
 
-    const responseText = message.content[0].text;
+    let fullResponse = '';
+    let chunkIndex = 0;
+    let usage = null;
+    let buffer = ''; // Buffer for incremental step parsing
+    let sentSteps = []; // Track sent steps to avoid duplicates
+
+    for await (const chunk of stream) {
+      if (chunk.type === 'content_block_delta') {
+        const token = chunk.delta.text;
+        fullResponse += token;
+        buffer += token;
+
+        // Send raw text chunk immediately for instant feedback
+        if (onChunk) {
+          await onChunk(JSON.stringify({
+            type: 'raw_text',
+            text: token,
+            chunkIndex: chunkIndex
+          }) + '\n', chunkIndex);
+        }
+
+        // Try to parse and send complete steps from buffer
+        if (onChunk) {
+          const narrativeData = parseNarrativeSteps(buffer);
+          for (let i = sentSteps.length; i < narrativeData.steps.length; i++) {
+            const step = narrativeData.steps[i];
+            // Check if it's the last step and buffer doesn't end with expected markers
+            const isLastStep = i === narrativeData.steps.length - 1;
+            const bufferEndsCleanly = buffer.trimEnd().endsWith(']') ||
+                                    buffer.trimEnd().endsWith('[END_CHOICE]');
+
+            if (!isLastStep || bufferEndsCleanly) {
+              await onChunk(JSON.stringify({
+                type: 'step',
+                stepIndex: i,
+                step: step,
+                isIncremental: true
+              }) + '\n', chunkIndex);
+
+              sentSteps.push(step);
+            }
+          }
+        }
+        chunkIndex++;
+      } else if (chunk.type === 'message_delta' && chunk.usage) {
+        // Capture token usage from stream
+        usage = chunk.usage;
+      }
+    }
+
+    // After streaming completes, send final parsed structure
+    if (onChunk && fullResponse) {
+      console.log('📖 Finalizing narrative steps...');
+      const narrativeData = parseNarrativeSteps(fullResponse);
+
+      // Send any remaining steps that weren't sent during streaming
+      for (let i = sentSteps.length; i < narrativeData.steps.length; i++) {
+        const step = narrativeData.steps[i];
+        await onChunk(JSON.stringify({
+          type: 'step',
+          stepIndex: i,
+          step: step,
+          isIncremental: false
+        }) + '\n', i);
+      }
+
+      // Send completion signal with full metadata
+      await onChunk(JSON.stringify({
+        type: 'complete',
+        totalSteps: narrativeData.totalSteps,
+        allSteps: narrativeData.steps
+      }) + '\n', chunkIndex);
+    }
 
     // Update conversation history
     session.conversationHistory = messages;
     session.conversationHistory.push({
       role: 'assistant',
-      content: responseText
+      content: fullResponse
     });
+    // Update token usage tracking
+    session.tokenUsage.totalOutputTokens += usage.output_tokens || 0;
+    session.tokenUsage.totalTokens += (usage.output_tokens || 0);
+    session.tokenUsage.apiCalls += 1;
 
-    // Keep conversation history manageable (last 20 messages)
-    if (session.conversationHistory.length > 20) {
-      session.conversationHistory = session.conversationHistory.slice(-20);
-    }
-
+    console.log('📊 Token Usage (Streaming):');
+    console.log(`   Output Tokens: ${usage.output_tokens || 0}`);
+    console.log(`   Session Total Tokens: ${session.tokenUsage.totalTokens}`);
+    console.log(`   API Calls: ${session.tokenUsage.apiCalls}`);
+  
     return {
-      message: responseText,
+      message: fullResponse,
       metadata: {
-        model: message.model,
-        usage: message.usage
+        model: 'claude-sonnet-4-5-20250929',
+        streaming: true,
+        usage: usage,
+        sessionTokenUsage: session.tokenUsage
       }
     };
-  } catch (error) {
-    console.error('Claude API error:', error);
-    
-    // Provide helpful error message
-    if (error.message.includes('api_key')) {
-      throw new Error('Claude API key not configured. Please set CLAUDE_API_KEY in .env file');
-    }
-    
-    throw new Error(`Failed to generate response: ${error.message}`);
   }
+
+  // Non-streaming mode is not supported
+  throw new Error('Non-streaming mode is not supported. Please use streaming mode.');
 }
-
-/**
- * Update game state based on action and response
- */
-function updateGameState(session, action, response) {
-  // Update game state logic
-  // This would be driven by the LLM response or game rules
-  
-  const lowerAction = action.toLowerCase();
-  
-  // Example: Simple item pickup detection
-  if (lowerAction.includes('pick up') || lowerAction.includes('take')) {
-    const itemMatch = lowerAction.match(/(?:pick up|take)\s+(.+)/);
-    if (itemMatch) {
-      const item = itemMatch[1].trim();
-      if (!session.gameState.inventory.includes(item)) {
-        session.gameState.inventory.push(item);
-      }
-    }
-  }
-  
-  // Example: Location changes
-  if (lowerAction.includes('go to') || lowerAction.includes('move to')) {
-    const locationMatch = lowerAction.match(/(?:go to|move to)\s+(.+)/);
-    if (locationMatch) {
-      session.gameState.currentLocation = locationMatch[1].trim();
-    }
-  }
-  
-  // Update last action timestamp
-  session.gameState.lastAction = new Date().toISOString();
-}
-
-// Export updateGameState function
-export { updateGameState };
-
-/**
- * Save session metadata for recovery
- */
-function saveSessionMetadata(sessionId, metadata) {
-  const metaPath = path.join(__dirname, '..', 'game_saves', `${sessionId}_meta.json`);
-  try {
-    fs.writeFileSync(metaPath, JSON.stringify(metadata, null, 2), 'utf-8');
-  } catch (error) {
-    console.error('Error saving session metadata:', error);
-  }
-}
-
-/**
- * Load session metadata
- */
-function loadSessionMetadata(sessionId) {
-  const metaPath = path.join(__dirname, '..', 'game_saves', `${sessionId}_meta.json`);
-  if (fs.existsSync(metaPath)) {
-    try {
-      const data = fs.readFileSync(metaPath, 'utf-8');
-      return JSON.parse(data);
-    } catch (error) {
-      console.error('Error loading session metadata:', error);
-      return null;
-    }
-  }
-  return null;
-}
-
-/**
- * Recover session from status file if session lost from memory
- */
-function recoverSession(sessionId) {
-  const metadata = loadSessionMetadata(sessionId);
-  const characterStatus = loadStatus(sessionId);
-  
-  if (!metadata || !characterStatus) {
-    return null;
-  }
-  
-  let gameSettings = fileGameSettings.get(metadata.fileId);
-  // Try to load from disk if not in memory
-  if (!gameSettings) {
-    gameSettings = loadGameSettings(metadata.fileId);
-    if (gameSettings) {
-      fileGameSettings.set(metadata.fileId, gameSettings);
-    } else {
-      return null;
-    }
-  }
-  
-  const session = {
-    sessionId,
-    fileId: metadata.fileId,
-    playerName: metadata.playerName || 'Player',
-    gameSettings,
-    characterStatus,
-    gameState: {
-      currentLocation: characterStatus.location || 'start',
-      inventory: characterStatus.inventory || [],
-      progress: {},
-      flags: characterStatus.flags || {},
-      health: characterStatus.character?.health || 100,
-      createdAt: metadata.createdAt,
-      isInitialized: metadata.isInitialized || false // Load from metadata
-    },
-    history: [],
-    conversationHistory: metadata.conversationHistory || [] // Load from metadata
-  };
-  
-  gameSessions.set(sessionId, session);
-  return session;
-}
-
-/**
- * Get character status for a session
- */
-export const getCharacterStatus = (sessionId) => {
-  return loadStatus(sessionId);
-};
-
-/**
- * Update character status manually
- */
-export const updateCharacterStatus = (sessionId, updates) => {
-  return updateStatus(sessionId, updates);
-};
-
-/**
- * Initialize game with Claude using streaming mode
- */
-export async function initializeGameWithClaudeStreaming(session) {
-  try {
-    const gamePrompt = prepareGameSettingsForLLM(session.gameSettings);
-    const status = loadStatus(session.sessionId);
-    const statusPrompt = getStatusUpdatePrompt(status);
-    
-    const systemPrompt = `你是一个专业的互动小说游戏主持人（Game Master）。你将基于以下PDF文档中的设定来主持一个互动小说游戏。
-
-游戏设定内容：
-${gamePrompt}
-
-${statusPrompt}
-
-你的职责：
-1. 严格遵循PDF中提供的所有设定、规则和框架
-2. 根据PDF要求生成相应的可视化板块和模块（如人物面板、时间、地点、热搜等）
-3. 用生动、细腻的文笔描述剧情，营造沉浸式体验
-4. 根据玩家的选择和行动推进剧情发展
-5. 支持中英文双语交互
-6. 保持剧情连贯性和逻辑性
-7. 当游戏事件影响角色状态时，在回复中包含状态更新标记
-
-**重要：行动选项格式规范**
-在每次回复的结尾，你必须提供玩家可以选择的行动选项。
-使用以下特殊格式来标记行动选项（每个选项独占一行）：
-
-[ACTION: 选项描述文本]
-
-示例：
-[ACTION: 探索神秘的森林深处]
-[ACTION: 与NPC对话获取信息]
-[ACTION: 在旅馆休息恢复体力]
-
-注意：
-- 每个行动选项必须使用 [ACTION: ...] 格式
-- 每个选项独占一行
-- 通常提供3-5个选项
-- 选项要具体、可操作
-- 不要在其他地方使用这个格式
-
-现在，请根据PDF设定，开始这个互动小说游戏。请：
-1. 展示初始设定（时间、地点、相关信息板块等）
-2. 介绍游戏背景和当前情境
-3. 给玩家提供可选的行动选项（使用[ACTION: ...]格式）
-
-请用中文回复，语言要生动有趣。`;
-
-    // 使用流式模式
-    const stream = await anthropic.messages.create({
-      model: 'deepseek-chat',
-      max_tokens: 10000,
-      system: systemPrompt,
-      messages: [
-        {
-          role: 'user',
-          content: '开始游戏！请展示初始设定并开始剧情。'
-        }
-      ],
-      stream: true  // 启用流式模式
-    });
-
-    let fullResponse = '';
-    
-    // 处理流式响应
-    for await (const chunk of stream) {
-      if (chunk.type === 'content_block_delta') {
-        fullResponse += chunk.delta.text;
-      }
-    }
-
-    // 解析响应
-    const response = {
-      message: fullResponse
-    };
-    
-    // Store conversation in session
-    session.conversationHistory = [
-      {
-        role: 'user',
-        content: '开始游戏！请展示初始设定并开始剧情。'
-      },
-      {
-        role: 'assistant',
-        content: fullResponse
-      }
-    ];
-    
-    // Update game state based on action
-    updateGameState(session, '开始游戏', response);
-    
-    // Parse and apply status updates from Claude's response
-    const updatedStatus = await applyClaudeUpdates(session.sessionId, response.message);
-    session.characterStatus = updatedStatus;
-
-    // Extract action options for the frontend to render as buttons
-    const actionOptions = extractActionOptions(response.message);
-    
-    return {
-      response: response.message,
-      gameState: session.gameState,
-      characterStatus: updatedStatus,
-      actionOptions
-    };
-    
-  } catch (error) {
-    console.error('Claude API error:', error);
-    throw new Error(`Failed to initialize game with Claude: ${error.message}`);
-  }
-}
-
-/**
- * Process player action with Claude using streaming mode
- */
-export async function processPlayerActionStreaming(sessionId, action) {
-  try {
-    const session = getSession(sessionId);
-    if (!session) {
-      throw new Error('Session not found');
-    }
-
-    const status = loadStatus(sessionId);
-    const statusPrompt = getStatusUpdatePrompt(status);
-    
-    const systemPrompt = `你是一个专业的互动小说游戏主持人（Game Master）。你将基于以下PDF文档中的设定来主持一个互动小说游戏。
-
-游戏设定内容：
-${prepareGameSettingsForLLM(session.gameSettings)}
-
-${statusPrompt}
-
-你的职责：
-1. 严格遵循PDF中提供的所有设定、规则和框架
-2. 根据PDF要求生成相应的可视化板块和模块（如人物面板、时间、地点、热搜等）
-3. 用生动、细腻的文笔描述剧情，营造沉浸式体验
-4. 根据玩家的选择和行动推进剧情发展
-5. 支持中英文双语交互
-6. 保持剧情连贯性和逻辑性
-7. 当游戏事件影响角色状态时，在回复中包含状态更新标记
-
-**重要：行动选项格式规范**
-在每次回复的结尾，你必须提供玩家可以选择的行动选项。
-使用以下特殊格式来标记行动选项（每个选项独占一行）：
-
-[ACTION: 选项描述文本]
-
-示例：
-[ACTION: 探索神秘的森林深处]
-[ACTION: 与NPC对话获取信息]
-[ACTION: 在旅馆休息恢复体力]
-
-注意：
-- 每个行动选项必须使用 [ACTION: ...] 格式
-- 每个选项独占一行
-- 通常提供3-5个选项
-- 选项要具体、可操作
-- 不要在其他地方使用这个格式
-
-请用中文回复，语言要生动有趣。`;
-
-    // Build conversation history for Claude (same as original implementation)
-    const messages = [...session.conversationHistory];
-    
-    // Add current action
-    messages.push({
-      role: 'user',
-      content: action
-    });
-
-    // 使用流式模式
-    const stream = await anthropic.messages.create({
-      model: 'deepseek-chat',
-      max_tokens: 10000,
-      system: systemPrompt,
-      messages: messages,
-      stream: true  // 启用流式模式
-    });
-
-    let fullResponse = '';
-    
-    // 处理流式响应
-    for await (const chunk of stream) {
-      if (chunk.type === 'content_block_delta') {
-        fullResponse += chunk.delta.text;
-      }
-    }
-
-    // 解析响应
-    const response = {
-      message: fullResponse
-    };
-    
-    // Update conversation history (same as original implementation)
-    session.conversationHistory.push({
-      role: 'user',
-      content: action
-    });
-    session.conversationHistory.push({
-      role: 'assistant',
-      content: response.message
-    });
-
-    // Keep conversation history manageable (last 20 messages)
-    if (session.conversationHistory.length > 20) {
-      session.conversationHistory = session.conversationHistory.slice(-20);
-    }
-    
-    // Update game state based on action
-    updateGameState(session, action, response);
-    
-    // Parse and apply status updates from Claude's response
-    const updatedStatus = await applyClaudeUpdates(sessionId, response.message);
-    session.characterStatus = updatedStatus;
-
-    // Extract action options for the frontend to render as buttons
-    const actionOptions = extractActionOptions(response.message);
-    
-    return {
-      response: response.message,
-      gameState: session.gameState,
-      characterStatus: updatedStatus,
-      actionOptions
-    };
-    
-  } catch (error) {
-    console.error('Claude API error:', error);
-    throw new Error(`Failed to process action with Claude: ${error.message}`);
-  }
-}
-

@@ -1,125 +1,551 @@
 {
   "version": "1.0",
-  "generatedAt": "2025-10-20T06:10:03.185Z",
-  "totalSessions": 7,
+  "generatedAt": "2025-10-21T03:10:40.230Z",
+  "totalSessions": 1,
   "sessions": [
     {
-      "sessionId": "5e7c6bb9412d807722eb5baaab8d04a4",
+      "sessionId": "838d7fbb598fcc4ff34606d76928fbe5",
       "playerName": "Player",
-      "fileId": "e709ecacbf20e0dfb8ccb07b62d44139",
-      "createdAt": "2025-10-20T06:02:57.934Z",
-      "lastUpdated": "2025-10-20T06:10:03.183Z",
+      "fileId": "7876522c372623374528d744976d047c",
+      "createdAt": "2025-10-21T03:07:50.806Z",
+      "lastUpdated": "2025-10-21T03:10:40.229Z",
       "isInitialized": false,
       "files": {
-        "session": "session_5e7c6bb9412d807722eb5baaab8d04a4.json",
-        "status": "status_5e7c6bb9412d807722eb5baaab8d04a4.json",
-        "history": "history_5e7c6bb9412d807722eb5baaab8d04a4.json",
-        "latest": "latest_5e7c6bb9412d807722eb5baaab8d04a4.json"
+        "session": "session_838d7fbb598fcc4ff34606d76928fbe5.json",
+        "status": "status_838d7fbb598fcc4ff34606d76928fbe5.json",
+        "history": "history_838d7fbb598fcc4ff34606d76928fbe5.json",
+        "latest": "latest_838d7fbb598fcc4ff34606d76928fbe5.json"
       },
-      "displayName": "Player - 2025/10/20 14:10:03",
-      "shortId": "5e7c6bb9"
-    },
-    {
-      "sessionId": "52ae0aded579f09ea85d9e05aa690069",
-      "playerName": "Player",
-      "fileId": "c50ce14abb637d6f669e030dbec10765",
-      "createdAt": "2025-10-20T05:28:12.224Z",
-      "lastUpdated": "2025-10-20T05:29:37.388Z",
-      "isInitialized": false,
-      "files": {
-        "session": "session_52ae0aded579f09ea85d9e05aa690069.json",
-        "status": "status_52ae0aded579f09ea85d9e05aa690069.json",
-        "history": "history_52ae0aded579f09ea85d9e05aa690069.json",
-        "latest": "latest_52ae0aded579f09ea85d9e05aa690069.json"
-      },
-      "displayName": "Player - 2025/10/20 13:29:37",
-      "shortId": "52ae0ade"
-    },
-    {
-      "sessionId": "7faf312f969f0b5534c1271ca84cb985",
-      "playerName": "Player",
-      "fileId": "a4bc4b5dc8873f8c0fac7ec31e548f2b",
-      "createdAt": "2025-10-20T05:20:09.057Z",
-      "lastUpdated": "2025-10-20T05:22:22.367Z",
-      "isInitialized": false,
-      "files": {
-        "session": "session_7faf312f969f0b5534c1271ca84cb985.json",
-        "status": "status_7faf312f969f0b5534c1271ca84cb985.json",
-        "history": "history_7faf312f969f0b5534c1271ca84cb985.json",
-        "latest": "latest_7faf312f969f0b5534c1271ca84cb985.json"
-      },
-      "displayName": "Player - 2025/10/20 13:22:22",
-      "shortId": "7faf312f"
-    },
-    {
-      "sessionId": "26f7104dd772a69325463d32353134fa",
-      "playerName": "Player",
-      "fileId": "1598d1abc0e56b4defa45381b4b8adc9",
-      "createdAt": "2025-10-20T05:10:56.262Z",
-      "lastUpdated": "2025-10-20T05:10:56.263Z",
-      "isInitialized": false,
-      "files": {
-        "session": "session_26f7104dd772a69325463d32353134fa.json",
-        "status": "status_26f7104dd772a69325463d32353134fa.json",
-        "history": "history_26f7104dd772a69325463d32353134fa.json",
-        "latest": "latest_26f7104dd772a69325463d32353134fa.json"
-      },
-      "displayName": "Player - 2025/10/20 13:10:56",
-      "shortId": "26f7104d"
-    },
-    {
-      "sessionId": "b7e41b6f9a1332d73c684c065a5c2303",
-      "playerName": "Player",
-      "fileId": "1598d1abc0e56b4defa45381b4b8adc9",
-      "createdAt": "2025-10-20T04:55:53.796Z",
-      "lastUpdated": "2025-10-20T04:57:59.653Z",
-      "isInitialized": false,
-      "files": {
-        "session": "session_b7e41b6f9a1332d73c684c065a5c2303.json",
-        "status": "status_b7e41b6f9a1332d73c684c065a5c2303.json",
-        "history": "history_b7e41b6f9a1332d73c684c065a5c2303.json",
-        "latest": "latest_b7e41b6f9a1332d73c684c065a5c2303.json"
-      },
-      "displayName": "Player - 2025/10/20 12:57:59",
-      "shortId": "b7e41b6f"
-    },
-    {
-      "sessionId": "e97367b3f144c2ac9a71be533f1d67af",
-      "playerName": "Player",
-      "fileId": "d6b9c05d3853c381634dd2670b17287c",
-      "createdAt": "2025-10-20T04:44:41.882Z",
-      "lastUpdated": "2025-10-20T04:45:34.377Z",
-      "isInitialized": false,
-      "files": {
-        "session": "session_e97367b3f144c2ac9a71be533f1d67af.json",
-        "status": "status_e97367b3f144c2ac9a71be533f1d67af.json",
-        "history": "history_e97367b3f144c2ac9a71be533f1d67af.json",
-        "latest": "latest_e97367b3f144c2ac9a71be533f1d67af.json"
-      },
-      "displayName": "Player - 2025/10/20 12:45:34",
-      "shortId": "e97367b3"
-    },
-    {
-      "sessionId": "046ff5ddd140207ef9fd4591bba750fc",
-      "playerName": "Player",
-      "fileId": "3605f4c429fb3150269b5dce41cb3cdf",
-      "createdAt": "2025-10-17T02:34:31.539Z",
-      "lastUpdated": "2025-10-17T02:34:31.540Z",
-      "isInitialized": false,
-      "files": {
-        "session": "session_046ff5ddd140207ef9fd4591bba750fc.json",
-        "status": "status_046ff5ddd140207ef9fd4591bba750fc.json",
-        "history": "history_046ff5ddd140207ef9fd4591bba750fc.json",
-        "latest": "latest_046ff5ddd140207ef9fd4591bba750fc.json"
-      },
-      "displayName": "Player - 2025/10/17 10:34:31",
-      "shortId": "046ff5dd"
+      "displayName": "Player - 2025/10/21 11:10:40",
+      "shortId": "838d7fbb"
     }
   ],
-  "description": "Manifest file listing all available game sessions",
-  "usage": {
-    "listAll": "Read this file to get all available sessions",
-    "accessSession": "Use files.session, files.status, etc. to access specific data",
-    "directAccess": "Files can be accessed at /game_data/<filename>"
+  "0191f777f2eaef67732d2577a05c1e2e": {
+    "createdAt": "2025-10-24T03:45:31.615Z",
+    "lastUpdated": "2025-10-24T03:48:29.928Z",
+    "files": {
+      "lore": "lore_0191f777f2eaef67732d2577a05c1e2e.json",
+      "player": "player_0191f777f2eaef67732d2577a05c1e2e.json",
+      "items": "items_0191f777f2eaef67732d2577a05c1e2e.json",
+      "scenes": "scenes_0191f777f2eaef67732d2577a05c1e2e.json"
+    },
+    "images": {
+      "directory": "images",
+      "avatars": "game_data/images/avatars/",
+      "scenes": "game_data/images/scenes/",
+      "icons": "game_data/images/icons/",
+      "generated": true,
+      "timestamp": "2025-10-24T03:48:29.925Z"
+    }
+  },
+  "bab28e24150d74967c44612ee3a15cd9": {
+    "createdAt": "2025-10-24T05:54:54.252Z",
+    "lastUpdated": "2025-10-24T05:54:54.258Z",
+    "files": {
+      "lore": "lore_bab28e24150d74967c44612ee3a15cd9.json",
+      "player": "player_bab28e24150d74967c44612ee3a15cd9.json",
+      "items": "items_bab28e24150d74967c44612ee3a15cd9.json",
+      "scenes": "scenes_bab28e24150d74967c44612ee3a15cd9.json"
+    }
+  },
+  "f23bfb6f6492f55cfe5ec4896de96596": {
+    "createdAt": "2025-10-24T07:23:55.176Z",
+    "lastUpdated": "2025-10-24T07:23:55.180Z",
+    "files": {
+      "lore": "lore_f23bfb6f6492f55cfe5ec4896de96596.json",
+      "player": "player_f23bfb6f6492f55cfe5ec4896de96596.json",
+      "items": "items_f23bfb6f6492f55cfe5ec4896de96596.json",
+      "scenes": "scenes_f23bfb6f6492f55cfe5ec4896de96596.json"
+    }
+  },
+  "5056dd71be23e57d52a2e696805b4244": {
+    "createdAt": "2025-10-24T07:46:42.188Z",
+    "lastUpdated": "2025-10-24T07:46:42.193Z",
+    "files": {
+      "lore": "lore_5056dd71be23e57d52a2e696805b4244.json",
+      "player": "player_5056dd71be23e57d52a2e696805b4244.json",
+      "items": "items_5056dd71be23e57d52a2e696805b4244.json",
+      "scenes": "scenes_5056dd71be23e57d52a2e696805b4244.json"
+    }
+  },
+  "61a4fe860f0d9a697f4dedcf5f5f2286": {
+    "createdAt": "2025-10-24T07:53:55.737Z",
+    "lastUpdated": "2025-10-24T07:53:55.741Z",
+    "files": {
+      "lore": "lore_61a4fe860f0d9a697f4dedcf5f5f2286.json",
+      "player": "player_61a4fe860f0d9a697f4dedcf5f5f2286.json",
+      "items": "items_61a4fe860f0d9a697f4dedcf5f5f2286.json",
+      "scenes": "scenes_61a4fe860f0d9a697f4dedcf5f5f2286.json"
+    }
+  },
+  "4a0846c97aebdfe543f16ffde645451b": {
+    "createdAt": "2025-10-24T08:35:34.747Z",
+    "lastUpdated": "2025-10-24T08:35:34.751Z",
+    "files": {
+      "lore": "lore_4a0846c97aebdfe543f16ffde645451b.json",
+      "player": "player_4a0846c97aebdfe543f16ffde645451b.json",
+      "items": "items_4a0846c97aebdfe543f16ffde645451b.json",
+      "scenes": "scenes_4a0846c97aebdfe543f16ffde645451b.json"
+    }
+  },
+  "b1257ca33f0b13a5419f4943b26673e0": {
+    "createdAt": "2025-10-24T08:45:13.884Z",
+    "lastUpdated": "2025-10-24T08:45:13.888Z",
+    "files": {
+      "lore": "lore_b1257ca33f0b13a5419f4943b26673e0.json",
+      "player": "player_b1257ca33f0b13a5419f4943b26673e0.json",
+      "items": "items_b1257ca33f0b13a5419f4943b26673e0.json",
+      "scenes": "scenes_b1257ca33f0b13a5419f4943b26673e0.json"
+    }
+  },
+  "acb436a071ab867bad21dbaf7a839a71": {
+    "createdAt": "2025-10-24T08:50:44.058Z",
+    "lastUpdated": "2025-10-24T08:52:34.638Z",
+    "files": {
+      "lore": "lore_acb436a071ab867bad21dbaf7a839a71.json",
+      "player": "player_acb436a071ab867bad21dbaf7a839a71.json",
+      "items": "items_acb436a071ab867bad21dbaf7a839a71.json",
+      "scenes": "scenes_acb436a071ab867bad21dbaf7a839a71.json"
+    }
+  },
+  "8fa1aef645f571bdb83e7345b444b836": {
+    "createdAt": "2025-10-24T09:22:19.052Z",
+    "lastUpdated": "2025-10-24T09:23:51.977Z",
+    "files": {
+      "lore": "lore_8fa1aef645f571bdb83e7345b444b836.json",
+      "player": "player_8fa1aef645f571bdb83e7345b444b836.json",
+      "items": "items_8fa1aef645f571bdb83e7345b444b836.json",
+      "scenes": "scenes_8fa1aef645f571bdb83e7345b444b836.json"
+    }
+  },
+  "082de0c2d040fda125c3927ede90f095": {
+    "createdAt": "2025-10-24T09:34:35.761Z",
+    "lastUpdated": "2025-10-24T09:34:35.764Z",
+    "files": {
+      "lore": "lore_082de0c2d040fda125c3927ede90f095.json",
+      "player": "player_082de0c2d040fda125c3927ede90f095.json",
+      "items": "items_082de0c2d040fda125c3927ede90f095.json",
+      "scenes": "scenes_082de0c2d040fda125c3927ede90f095.json"
+    }
+  },
+  "136e756025e8ed7e620b7c14ad5dcd53": {
+    "createdAt": "2025-10-24T09:43:22.077Z",
+    "lastUpdated": "2025-10-24T09:43:22.080Z",
+    "files": {
+      "lore": "lore_136e756025e8ed7e620b7c14ad5dcd53.json",
+      "player": "player_136e756025e8ed7e620b7c14ad5dcd53.json",
+      "items": "items_136e756025e8ed7e620b7c14ad5dcd53.json",
+      "scenes": "scenes_136e756025e8ed7e620b7c14ad5dcd53.json"
+    }
+  },
+  "ad6f4eeff402e28596cdf8eee8c5d1cb": {
+    "createdAt": "2025-10-24T10:20:56.723Z",
+    "lastUpdated": "2025-10-24T10:20:56.728Z",
+    "files": {
+      "lore": "lore_ad6f4eeff402e28596cdf8eee8c5d1cb.json",
+      "player": "player_ad6f4eeff402e28596cdf8eee8c5d1cb.json",
+      "items": "items_ad6f4eeff402e28596cdf8eee8c5d1cb.json",
+      "scenes": "scenes_ad6f4eeff402e28596cdf8eee8c5d1cb.json"
+    }
+  },
+  "4182b153d834fd9b2c509fcb5fdb3c9f": {
+    "createdAt": "2025-10-24T10:40:08.366Z",
+    "lastUpdated": "2025-10-24T10:40:08.368Z",
+    "files": {
+      "lore": "lore_4182b153d834fd9b2c509fcb5fdb3c9f.json",
+      "player": "player_4182b153d834fd9b2c509fcb5fdb3c9f.json",
+      "items": "items_4182b153d834fd9b2c509fcb5fdb3c9f.json",
+      "scenes": "scenes_4182b153d834fd9b2c509fcb5fdb3c9f.json"
+    }
+  },
+  "ffb37f71d875473b4a2e56852f9f249e": {
+    "createdAt": "2025-10-24T10:55:05.954Z",
+    "lastUpdated": "2025-10-24T10:55:05.956Z",
+    "files": {
+      "lore": "lore_ffb37f71d875473b4a2e56852f9f249e.json",
+      "player": "player_ffb37f71d875473b4a2e56852f9f249e.json",
+      "items": "items_ffb37f71d875473b4a2e56852f9f249e.json",
+      "scenes": "scenes_ffb37f71d875473b4a2e56852f9f249e.json"
+    }
+  },
+  "88f1cc37b42a1f1a8434c1803a51931d": {
+    "createdAt": "2025-10-24T11:18:48.733Z",
+    "lastUpdated": "2025-10-24T11:18:48.736Z",
+    "files": {
+      "lore": "lore_88f1cc37b42a1f1a8434c1803a51931d.json",
+      "player": "player_88f1cc37b42a1f1a8434c1803a51931d.json",
+      "items": "items_88f1cc37b42a1f1a8434c1803a51931d.json",
+      "scenes": "scenes_88f1cc37b42a1f1a8434c1803a51931d.json"
+    }
+  },
+  "d3c6b1d09b865c1883ddb6969709f720": {
+    "createdAt": "2025-10-24T11:50:09.439Z",
+    "lastUpdated": "2025-10-24T11:50:09.443Z",
+    "files": {
+      "lore": "lore_d3c6b1d09b865c1883ddb6969709f720.json",
+      "player": "player_d3c6b1d09b865c1883ddb6969709f720.json",
+      "items": "items_d3c6b1d09b865c1883ddb6969709f720.json",
+      "scenes": "scenes_d3c6b1d09b865c1883ddb6969709f720.json"
+    }
+  },
+  "d9e07de22568cad18070899d89384eb9": {
+    "createdAt": "2025-10-27T02:15:41.429Z",
+    "lastUpdated": "2025-10-27T02:15:41.435Z",
+    "files": {
+      "lore": "lore_d9e07de22568cad18070899d89384eb9.json",
+      "player": "player_d9e07de22568cad18070899d89384eb9.json",
+      "items": "items_d9e07de22568cad18070899d89384eb9.json",
+      "scenes": "scenes_d9e07de22568cad18070899d89384eb9.json"
+    }
+  },
+  "772c36f9690f25272fa4929c5e4a1d63": {
+    "createdAt": "2025-10-27T02:50:07.813Z",
+    "lastUpdated": "2025-10-27T02:50:07.828Z",
+    "files": {
+      "lore": "lore_772c36f9690f25272fa4929c5e4a1d63.json",
+      "player": "player_772c36f9690f25272fa4929c5e4a1d63.json",
+      "items": "items_772c36f9690f25272fa4929c5e4a1d63.json",
+      "scenes": "scenes_772c36f9690f25272fa4929c5e4a1d63.json"
+    }
+  },
+  "00914d5be68ff005227e8089010c7bb4": {
+    "createdAt": "2025-10-27T06:25:33.762Z",
+    "lastUpdated": "2025-10-27T06:25:33.767Z",
+    "files": {
+      "lore": "lore_00914d5be68ff005227e8089010c7bb4.json",
+      "player": "player_00914d5be68ff005227e8089010c7bb4.json",
+      "items": "items_00914d5be68ff005227e8089010c7bb4.json",
+      "scenes": "scenes_00914d5be68ff005227e8089010c7bb4.json"
+    }
+  },
+  "fa8b97f6d6878904e41747d3eecbdf41": {
+    "createdAt": "2025-10-27T11:19:04.899Z",
+    "lastUpdated": "2025-10-27T11:19:04.903Z",
+    "files": {
+      "lore": "lore_fa8b97f6d6878904e41747d3eecbdf41.json",
+      "player": "player_fa8b97f6d6878904e41747d3eecbdf41.json",
+      "items": "items_fa8b97f6d6878904e41747d3eecbdf41.json",
+      "scenes": "scenes_fa8b97f6d6878904e41747d3eecbdf41.json"
+    }
+  },
+  "7af03446eaeb1a37ac933664dccdc152": {
+    "createdAt": "2025-10-28T07:05:42.534Z",
+    "lastUpdated": "2025-10-28T07:05:42.538Z",
+    "files": {
+      "lore": "lore_7af03446eaeb1a37ac933664dccdc152.json",
+      "player": "player_7af03446eaeb1a37ac933664dccdc152.json",
+      "items": "items_7af03446eaeb1a37ac933664dccdc152.json",
+      "scenes": "scenes_7af03446eaeb1a37ac933664dccdc152.json"
+    }
+  },
+  "c531700dc412f6b0042b8f5420cad4fe": {
+    "createdAt": "2025-10-28T07:27:38.625Z",
+    "lastUpdated": "2025-10-28T07:27:38.627Z",
+    "files": {
+      "lore": "lore_c531700dc412f6b0042b8f5420cad4fe.json",
+      "player": "player_c531700dc412f6b0042b8f5420cad4fe.json",
+      "items": "items_c531700dc412f6b0042b8f5420cad4fe.json",
+      "scenes": "scenes_c531700dc412f6b0042b8f5420cad4fe.json"
+    }
+  },
+  "57984f0aa4934b4839d9ff7233180362": {
+    "createdAt": "2025-10-28T08:16:43.990Z",
+    "lastUpdated": "2025-10-28T08:16:43.994Z",
+    "files": {
+      "lore": "lore_57984f0aa4934b4839d9ff7233180362.json",
+      "player": "player_57984f0aa4934b4839d9ff7233180362.json",
+      "items": "items_57984f0aa4934b4839d9ff7233180362.json",
+      "scenes": "scenes_57984f0aa4934b4839d9ff7233180362.json"
+    }
+  },
+  "a3da27b2b5345a9959fc4d25ca70af18": {
+    "createdAt": "2025-10-28T08:40:57.798Z",
+    "lastUpdated": "2025-10-28T08:40:57.802Z",
+    "files": {
+      "lore": "lore_a3da27b2b5345a9959fc4d25ca70af18.json",
+      "player": "player_a3da27b2b5345a9959fc4d25ca70af18.json",
+      "items": "items_a3da27b2b5345a9959fc4d25ca70af18.json",
+      "scenes": "scenes_a3da27b2b5345a9959fc4d25ca70af18.json"
+    }
+  },
+  "099b1b18efb0b21bc1a23cc29494df05": {
+    "createdAt": "2025-10-28T08:45:34.291Z",
+    "lastUpdated": "2025-10-28T08:45:34.293Z",
+    "files": {
+      "lore": "lore_099b1b18efb0b21bc1a23cc29494df05.json",
+      "player": "player_099b1b18efb0b21bc1a23cc29494df05.json",
+      "items": "items_099b1b18efb0b21bc1a23cc29494df05.json",
+      "scenes": "scenes_099b1b18efb0b21bc1a23cc29494df05.json"
+    }
+  },
+  "164bc25278af8e7216066741e2891b3f": {
+    "createdAt": "2025-10-28T09:12:27.307Z",
+    "lastUpdated": "2025-10-28T09:12:27.310Z",
+    "files": {
+      "lore": "lore_164bc25278af8e7216066741e2891b3f.json",
+      "player": "player_164bc25278af8e7216066741e2891b3f.json",
+      "items": "items_164bc25278af8e7216066741e2891b3f.json",
+      "scenes": "scenes_164bc25278af8e7216066741e2891b3f.json"
+    }
+  },
+  "93e35f4b775395d8604a71bf266887db": {
+    "createdAt": "2025-10-29T02:19:00.850Z",
+    "lastUpdated": "2025-10-29T02:19:00.854Z",
+    "files": {
+      "lore": "lore_93e35f4b775395d8604a71bf266887db.json",
+      "player": "player_93e35f4b775395d8604a71bf266887db.json",
+      "items": "items_93e35f4b775395d8604a71bf266887db.json",
+      "scenes": "scenes_93e35f4b775395d8604a71bf266887db.json"
+    }
+  },
+  "0ddb3bdc37e194472bd80907857c9050": {
+    "createdAt": "2025-10-29T03:17:44.742Z",
+    "lastUpdated": "2025-10-29T03:17:44.747Z",
+    "files": {
+      "lore": "lore_0ddb3bdc37e194472bd80907857c9050.json",
+      "player": "player_0ddb3bdc37e194472bd80907857c9050.json",
+      "items": "items_0ddb3bdc37e194472bd80907857c9050.json",
+      "scenes": "scenes_0ddb3bdc37e194472bd80907857c9050.json"
+    }
+  },
+  "8eef1bde64fdc6209065ca6f89b2d341": {
+    "createdAt": "2025-10-29T08:47:11.761Z",
+    "lastUpdated": "2025-10-29T08:47:11.766Z",
+    "files": {
+      "lore": "lore_8eef1bde64fdc6209065ca6f89b2d341.json",
+      "player": "player_8eef1bde64fdc6209065ca6f89b2d341.json",
+      "items": "items_8eef1bde64fdc6209065ca6f89b2d341.json",
+      "scenes": "scenes_8eef1bde64fdc6209065ca6f89b2d341.json"
+    }
+  },
+  "0fed0643f24e7c7b3b68e74af04cb0aa": {
+    "createdAt": "2025-10-30T07:16:40.571Z",
+    "lastUpdated": "2025-10-30T07:16:40.576Z",
+    "files": {
+      "lore": "lore_0fed0643f24e7c7b3b68e74af04cb0aa.json",
+      "player": "player_0fed0643f24e7c7b3b68e74af04cb0aa.json",
+      "items": "items_0fed0643f24e7c7b3b68e74af04cb0aa.json",
+      "scenes": "scenes_0fed0643f24e7c7b3b68e74af04cb0aa.json"
+    }
+  },
+  "dfe8a81d601e6d1b34d208c916642e32": {
+    "createdAt": "2025-10-30T07:22:32.288Z",
+    "lastUpdated": "2025-10-30T07:22:32.290Z",
+    "files": {
+      "lore": "lore_dfe8a81d601e6d1b34d208c916642e32.json",
+      "player": "player_dfe8a81d601e6d1b34d208c916642e32.json",
+      "items": "items_dfe8a81d601e6d1b34d208c916642e32.json",
+      "scenes": "scenes_dfe8a81d601e6d1b34d208c916642e32.json"
+    }
+  },
+  "c2f99389e5fd5f43b42a0a45cfcfeed2": {
+    "createdAt": "2025-10-30T07:27:25.052Z",
+    "lastUpdated": "2025-10-30T07:27:25.055Z",
+    "files": {
+      "lore": "lore_c2f99389e5fd5f43b42a0a45cfcfeed2.json",
+      "player": "player_c2f99389e5fd5f43b42a0a45cfcfeed2.json",
+      "items": "items_c2f99389e5fd5f43b42a0a45cfcfeed2.json",
+      "scenes": "scenes_c2f99389e5fd5f43b42a0a45cfcfeed2.json"
+    }
+  },
+  "7b7e7d128c686dc57bd23996118e8c0a": {
+    "createdAt": "2025-10-30T07:31:46.820Z",
+    "lastUpdated": "2025-10-30T07:31:46.822Z",
+    "files": {
+      "lore": "lore_7b7e7d128c686dc57bd23996118e8c0a.json",
+      "player": "player_7b7e7d128c686dc57bd23996118e8c0a.json",
+      "items": "items_7b7e7d128c686dc57bd23996118e8c0a.json",
+      "scenes": "scenes_7b7e7d128c686dc57bd23996118e8c0a.json"
+    }
+  },
+  "83089b271543d3e2a7cb8b1a4cee3f41": {
+    "createdAt": "2025-10-30T08:05:32.316Z",
+    "lastUpdated": "2025-10-30T08:05:32.319Z",
+    "files": {
+      "lore": "lore_83089b271543d3e2a7cb8b1a4cee3f41.json",
+      "player": "player_83089b271543d3e2a7cb8b1a4cee3f41.json",
+      "items": "items_83089b271543d3e2a7cb8b1a4cee3f41.json",
+      "scenes": "scenes_83089b271543d3e2a7cb8b1a4cee3f41.json"
+    }
+  },
+  "fce601902ed344dfee191daaa539091d": {
+    "createdAt": "2025-11-14T10:16:45.653Z",
+    "lastUpdated": "2025-11-14T10:16:45.657Z",
+    "files": {
+      "lore": "lore_fce601902ed344dfee191daaa539091d.json",
+      "player": "player_fce601902ed344dfee191daaa539091d.json",
+      "items": "items_fce601902ed344dfee191daaa539091d.json",
+      "scenes": "scenes_fce601902ed344dfee191daaa539091d.json"
+    }
+  },
+  "f7f1ceba4a695f4e922673c0372f31b3": {
+    "createdAt": "2025-11-14T10:40:23.270Z",
+    "lastUpdated": "2025-11-14T10:40:23.272Z",
+    "files": {
+      "lore": "lore_f7f1ceba4a695f4e922673c0372f31b3.json",
+      "player": "player_f7f1ceba4a695f4e922673c0372f31b3.json",
+      "items": "items_f7f1ceba4a695f4e922673c0372f31b3.json",
+      "scenes": "scenes_f7f1ceba4a695f4e922673c0372f31b3.json"
+    }
+  },
+  "4674a0211e62488808b85387a93aabb8": {
+    "createdAt": "2025-11-14T10:45:14.737Z",
+    "lastUpdated": "2025-11-14T10:45:14.740Z",
+    "files": {
+      "lore": "lore_4674a0211e62488808b85387a93aabb8.json",
+      "player": "player_4674a0211e62488808b85387a93aabb8.json",
+      "items": "items_4674a0211e62488808b85387a93aabb8.json",
+      "scenes": "scenes_4674a0211e62488808b85387a93aabb8.json"
+    }
+  },
+  "384e5351a82db3a0542db37f61facae6": {
+    "createdAt": "2025-11-14T10:53:40.487Z",
+    "lastUpdated": "2025-11-14T10:53:40.491Z",
+    "files": {
+      "lore": "lore_384e5351a82db3a0542db37f61facae6.json",
+      "player": "player_384e5351a82db3a0542db37f61facae6.json",
+      "items": "items_384e5351a82db3a0542db37f61facae6.json",
+      "scenes": "scenes_384e5351a82db3a0542db37f61facae6.json"
+    }
+  },
+  "56634a23ca9f885e4d6625536eac5c76": {
+    "createdAt": "2025-11-18T07:33:20.148Z",
+    "lastUpdated": "2025-11-18T07:33:20.151Z",
+    "files": {
+      "lore": "lore_56634a23ca9f885e4d6625536eac5c76.json",
+      "player": "player_56634a23ca9f885e4d6625536eac5c76.json",
+      "items": "items_56634a23ca9f885e4d6625536eac5c76.json",
+      "scenes": "scenes_56634a23ca9f885e4d6625536eac5c76.json"
+    }
+  },
+  "94d2916f079ecb367c3d3f245e65ad88": {
+    "createdAt": "2025-11-19T09:57:03.112Z",
+    "lastUpdated": "2025-11-19T09:57:03.119Z",
+    "files": {
+      "lore": "lore_94d2916f079ecb367c3d3f245e65ad88.json",
+      "player": "player_94d2916f079ecb367c3d3f245e65ad88.json",
+      "items": "items_94d2916f079ecb367c3d3f245e65ad88.json",
+      "scenes": "scenes_94d2916f079ecb367c3d3f245e65ad88.json"
+    }
+  },
+  "090805022af7fb6194a5ac5b9209cb93": {
+    "createdAt": "2025-11-24T03:29:55.564Z",
+    "lastUpdated": "2025-11-24T03:29:55.590Z",
+    "files": {
+      "lore": "lore_090805022af7fb6194a5ac5b9209cb93.json",
+      "player": "player_090805022af7fb6194a5ac5b9209cb93.json",
+      "items": "items_090805022af7fb6194a5ac5b9209cb93.json",
+      "scenes": "scenes_090805022af7fb6194a5ac5b9209cb93.json"
+    }
+  },
+  "1fda506105e8d855280f677e64aecd50": {
+    "createdAt": "2025-11-25T07:23:46.345Z",
+    "lastUpdated": "2025-11-25T07:23:46.359Z",
+    "files": {
+      "lore": "lore_1fda506105e8d855280f677e64aecd50.json",
+      "player": "player_1fda506105e8d855280f677e64aecd50.json",
+      "items": "items_1fda506105e8d855280f677e64aecd50.json",
+      "scenes": "scenes_1fda506105e8d855280f677e64aecd50.json"
+    }
+  },
+  "54c367664dc382c73866b57ded412488": {
+    "createdAt": "2025-11-25T07:43:48.917Z",
+    "lastUpdated": "2025-11-25T07:43:48.923Z",
+    "files": {
+      "lore": "lore_54c367664dc382c73866b57ded412488.json",
+      "player": "player_54c367664dc382c73866b57ded412488.json",
+      "items": "items_54c367664dc382c73866b57ded412488.json",
+      "scenes": "scenes_54c367664dc382c73866b57ded412488.json"
+    }
+  },
+  "908d5d000f0bd4e1ebe2e5b70189f77e": {
+    "createdAt": "2025-11-25T07:49:31.834Z",
+    "lastUpdated": "2025-11-25T07:49:31.841Z",
+    "files": {
+      "lore": "lore_908d5d000f0bd4e1ebe2e5b70189f77e.json",
+      "player": "player_908d5d000f0bd4e1ebe2e5b70189f77e.json",
+      "items": "items_908d5d000f0bd4e1ebe2e5b70189f77e.json",
+      "scenes": "scenes_908d5d000f0bd4e1ebe2e5b70189f77e.json"
+    }
+  },
+  "54de25ddc67072621d8cce0ffe6ea5de": {
+    "createdAt": "2025-11-25T07:53:21.167Z",
+    "lastUpdated": "2025-11-25T07:53:21.173Z",
+    "files": {
+      "lore": "lore_54de25ddc67072621d8cce0ffe6ea5de.json",
+      "player": "player_54de25ddc67072621d8cce0ffe6ea5de.json",
+      "items": "items_54de25ddc67072621d8cce0ffe6ea5de.json",
+      "scenes": "scenes_54de25ddc67072621d8cce0ffe6ea5de.json"
+    }
+  },
+  "85ee186215075473c28ae414921b2ed2": {
+    "createdAt": "2025-11-25T08:01:11.887Z",
+    "lastUpdated": "2025-11-25T08:01:11.899Z",
+    "files": {
+      "lore": "lore_85ee186215075473c28ae414921b2ed2.json",
+      "player": "player_85ee186215075473c28ae414921b2ed2.json",
+      "items": "items_85ee186215075473c28ae414921b2ed2.json",
+      "scenes": "scenes_85ee186215075473c28ae414921b2ed2.json"
+    }
+  },
+  "8c3585fbcb55a9977f5d22ebc2f47946": {
+    "createdAt": "2025-11-25T08:17:19.351Z",
+    "lastUpdated": "2025-11-25T08:17:19.356Z",
+    "files": {
+      "lore": "lore_8c3585fbcb55a9977f5d22ebc2f47946.json",
+      "player": "player_8c3585fbcb55a9977f5d22ebc2f47946.json",
+      "items": "items_8c3585fbcb55a9977f5d22ebc2f47946.json",
+      "scenes": "scenes_8c3585fbcb55a9977f5d22ebc2f47946.json"
+    },
+    "a325a08ee2d16fcce311dace8a2e8417": {
+      "createdAt": "2025-11-25T10:24:05.637Z",
+      "lastUpdated": "2025-11-25T10:24:05.640Z",
+      "files": {
+        "lore": "lore_a325a08ee2d16fcce311dace8a2e8417.json",
+        "player": "player_a325a08ee2d16fcce311dace8a2e8417.json",
+        "items": "items_a325a08ee2d16fcce311dace8a2e8417.json",
+        "scenes": "scenes_a325a08ee2d16fcce311dace8a2e8417.json"
+      }
+    }
+  },
+  "d330453c6cd41cce889c75928419dc39": {
+    "createdAt": "2025-11-30T11:04:33.241Z",
+    "lastUpdated": "2025-11-30T11:04:33.244Z",
+    "files": {
+      "lore": "lore_d330453c6cd41cce889c75928419dc39.json",
+      "player": "player_d330453c6cd41cce889c75928419dc39.json",
+      "items": "items_d330453c6cd41cce889c75928419dc39.json",
+      "scenes": "scenes_d330453c6cd41cce889c75928419dc39.json"
+    }
+  },
+  "6bad3a820f81a3827debc40b9d4c46a2": {
+    "createdAt": "2025-12-01T06:42:28.264Z",
+    "lastUpdated": "2025-12-01T06:42:28.267Z",
+    "files": {
+      "lore": "lore_6bad3a820f81a3827debc40b9d4c46a2.json",
+      "player": "player_6bad3a820f81a3827debc40b9d4c46a2.json",
+      "items": "items_6bad3a820f81a3827debc40b9d4c46a2.json",
+      "scenes": "scenes_6bad3a820f81a3827debc40b9d4c46a2.json"
+    }
+  },
+  "7bea7ab05c6dab195c949527fa227de8": {
+    "createdAt": "2025-12-09T05:08:57.748Z",
+    "lastUpdated": "2025-12-09T05:08:57.753Z",
+    "files": {
+      "lore": "lore_7bea7ab05c6dab195c949527fa227de8.json",
+      "player": "player_7bea7ab05c6dab195c949527fa227de8.json",
+      "items": "items_7bea7ab05c6dab195c949527fa227de8.json",
+      "scenes": "scenes_7bea7ab05c6dab195c949527fa227de8.json"
+    }
+  },
+  "9edb2b37dcd612d012a81ad5e556c8b9": {
+    "createdAt": "2025-12-09T05:19:43.851Z",
+    "lastUpdated": "2025-12-09T05:19:43.854Z",
+    "files": {
+      "lore": "lore_9edb2b37dcd612d012a81ad5e556c8b9.json",
+      "player": "player_9edb2b37dcd612d012a81ad5e556c8b9.json",
+      "items": "items_9edb2b37dcd612d012a81ad5e556c8b9.json",
+      "scenes": "scenes_9edb2b37dcd612d012a81ad5e556c8b9.json"
+    }
   }
 }

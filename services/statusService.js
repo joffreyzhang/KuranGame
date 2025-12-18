@@ -3,266 +3,224 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import { dirname } from 'path';
 import Anthropic from '@anthropic-ai/sdk';
+import { deepMerge } from './utils.js';
+import { loadGameData } from './gameInitializationService.js';
+import { parseNarrativeSteps } from './narrativeParser.js';
+import { syncNetworkToScenes } from './networkService.js';
+import dotenv from 'dotenv';
 
+dotenv.config();
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
-
-// Initialize Claude client for attribute parsing
 const anthropic = new Anthropic({
   apiKey: process.env.CLAUDE_API_KEY,
   baseURL: process.env.CLAUDE_BASE_URL,
 });
+const GAME_DATA_DIR = path.join(__dirname, '..', 'public', 'game_data');
 
-// Configuration: Enable/disable LLM-based attribute parsing
-// Set to false to use regex-only parsing (faster, cheaper, but less accurate)
-const ENABLE_LLM_PARSING = process.env.ENABLE_LLM_PARSING !== 'false';
+function getPlayerFilePath(sessionId) {
+  // Save to session directory
+  const sessionDir = path.join(GAME_DATA_DIR, sessionId);
 
-// Directory for storing game saves
-const SAVES_DIR = path.join(__dirname, '..', 'game_saves');
-
-// Ensure saves directory exists
-if (!fs.existsSync(SAVES_DIR)) {
-  fs.mkdirSync(SAVES_DIR, { recursive: true });
-}
-
-// Utility: sanitize strings for filenames (Windows-safe)
-function sanitizeFilename(name) {
-  if (!name) return 'player';
-  return name
-    .toString()
-    .replace(/[<>:"/\\|?*\x00-\x1F]+/g, '_') // illegal chars
-    .replace(/\s+/g, ' ') // collapse whitespace
-    .trim()
-    .slice(0, 50) // limit length
-    .replace(/[.]+$/g, ''); // no trailing dots
-}
-
-// Utility: read session metadata directly from meta file
-function getSessionMetadata(sessionId) {
-  try {
-    const metaPath = path.join(SAVES_DIR, `${sessionId}_meta.json`);
-    if (fs.existsSync(metaPath)) {
-      const data = fs.readFileSync(metaPath, 'utf-8');
-      return JSON.parse(data);
-    }
-  } catch (e) {
-    // ignore and fall back
+  // Ensure session directory exists
+  if (!fs.existsSync(sessionDir)) {
+    fs.mkdirSync(sessionDir, { recursive: true });
   }
-  return null;
+
+  return path.join(sessionDir, `player_${sessionId}.json`);
 }
 
-// Build a pretty, deterministic status filename using metadata
-function buildPrettyStatusFilename(sessionId) {
-  const meta = getSessionMetadata(sessionId);
-  if (!meta) return `${sessionId}.json`;
+export function initializeStatus(sessionId, fileId, initialLocation) {
+  console.log('📦 Initializing player data for session:', sessionId);
 
-  const createdAt = meta.createdAt || new Date().toISOString();
-  const d = new Date(createdAt);
-  const pad = (n) => `${n}`.padStart(2, '0');
-  const stamp = `${d.getFullYear()}${pad(d.getMonth() + 1)}${pad(d.getDate())}-${pad(d.getHours())}${pad(d.getMinutes())}${pad(d.getSeconds())}`;
+  let templateData = null;
+  try {
+    // Try session directory first
+    let gameData = loadGameData(sessionId, true);
+    if (!gameData) {
+      gameData = loadGameData(fileId, false);
+    }
 
-  const player = sanitizeFilename(meta.playerName || 'Player');
-  const fileIdShort = (meta.fileId || '').toString().slice(0, 8) || 'file';
-  const sessionShort = sessionId.slice(0, 8);
+    if (gameData && gameData.playerData) {
+      templateData = gameData.playerData;
+      console.log('✅ Loaded PDF template data');
+    }
+  } catch (error) {
+    console.warn('⚠️ No PDF template found - using minimal fallback structure');
+    console.warn('⚠️ Please ensure game data is extracted from PDF before starting session');
+  }
 
-  return `${stamp}__${player}__${fileIdShort}__${sessionShort}.json`;
-}
-
-/**
- * Default character status structure
- * Note: attributes will be dynamically extracted from PDF
- */
-const DEFAULT_STATUS = {
-  character: {
-    name: 'Player',
-    level: 1,
-    health: 100,
-    maxHealth: 100,
-    energy: 100,
-    maxEnergy: 100,
-    experience: 0,
-    money: 0
-  },
-  attributes: {}, // Dynamic attributes from PDF
-  inventory: [],
-  location: 'start',
-  flags: {}, // Game state flags (e.g., questCompleted, metCharacter)
-  relationships: {}, // Character relationships
-  achievements: []
-};
-
-/**
- * Get the file path for a session's status
- */
-function getStatusFilePath(sessionId) {
-  // Prefer pretty filename based on metadata
-  const pretty = buildPrettyStatusFilename(sessionId);
-  return path.join(SAVES_DIR, pretty);
-}
-
-/**
- * Initialize status for a new session
- * @param {string} sessionId - Unique session identifier
- * @param {object} pdfAttributes - Attributes extracted from PDF
- */
-export function initializeStatus(sessionId, pdfAttributes = {}) {
-  const status = {
-    ...JSON.parse(JSON.stringify(DEFAULT_STATUS)),
+  // Create session-based player data by cloning the template and adding session metadata
+  const playerData = {
+    fileId,
     sessionId,
     createdAt: new Date().toISOString(),
     lastUpdated: new Date().toISOString(),
-    // Merge PDF attributes into the attributes object
-    attributes: { ...pdfAttributes }
+    data: {
+      // Clone ALL template data
+      ...templateData,
+      // Add session-specific fields
+      location: initialLocation,
+      unlockedScenes: [initialLocation]// Initialize with only the starting scene unlocked
+    }
   };
 
-  saveStatus(sessionId, status);
-  return status;
+  saveStatus(sessionId, playerData);
+  return playerData.data; // Return just the data portion for compatibility
 }
 
 /**
- * Load status from file
+ * Clean up corrupted inventory structure
+ * Removes numeric keys and ensures proper { items: [...] } structure
  */
+function cleanInventoryStructure(inventory) {
+  if (!inventory) {
+    return { items: [] };
+  }
+
+  // If inventory is already an array (old format), wrap it
+  if (Array.isArray(inventory)) {
+    return { items: cleanItemsList(inventory) };
+  }
+
+  // If inventory is an object, extract only the items array
+  // and remove any numeric keys (0, 1, 2, etc.)
+  const items = inventory.items || [];
+
+  return { items: cleanItemsList(items) };
+}
+
+/**
+ * Clean up corrupted items in the inventory list
+ * Removes numeric keys from item objects (caused by string spread bug)
+ */
+function cleanItemsList(items) {
+  return items.map(item => {
+    if (typeof item !== 'object' || item === null) {
+      return item;
+    }
+
+    // Remove numeric keys (0, 1, 2, etc.) from item object
+    const cleanedItem = {};
+    for (const [key, value] of Object.entries(item)) {
+      // Skip numeric keys
+      if (!/^\d+$/.test(key)) {
+        cleanedItem[key] = value;
+      }
+    }
+    return cleanedItem;
+  });
+}
+
 export function loadStatus(sessionId) {
-  const prettyPath = getStatusFilePath(sessionId);
-  const legacyPath = path.join(SAVES_DIR, `${sessionId}.json`);
+  const filePath = getPlayerFilePath(sessionId);
 
   try {
-    if (fs.existsSync(prettyPath)) {
-      const data = fs.readFileSync(prettyPath, 'utf-8');
-      return JSON.parse(data);
-    }
-    if (fs.existsSync(legacyPath)) {
-      const data = fs.readFileSync(legacyPath, 'utf-8');
-      return JSON.parse(data);
+    if (fs.existsSync(filePath)) {
+      const fileData = fs.readFileSync(filePath, 'utf-8');
+      const playerData = JSON.parse(fileData);
+
+      // Clean up inventory structure on load
+      if (playerData.data && playerData.data.inventory) {
+        playerData.data.inventory = cleanInventoryStructure(playerData.data.inventory);
+      }
+
+      // Clean up deprecated fields
+      if (playerData.data) {
+        delete playerData.data.characterAttributes;
+        delete playerData.data.attributes;
+        delete playerData.data.relationships;
+        delete playerData.data.flags;
+        // Migrate old 'character' field to 'network' if exists
+        if (playerData.data.character && !playerData.data.network) {
+          playerData.data.network = playerData.data.character;
+        }
+        delete playerData.data.character;
+      }
+
+      return playerData.data; // Return just the data portion for compatibility
     }
   } catch (error) {
-    console.error(`Error loading status for session ${sessionId}:`, error);
+    console.error(`Error loading player data for session ${sessionId}:`, error);
   }
   return null;
 }
 
-/**
- * Save status to file
- */
-export function saveStatus(sessionId, status) {
-  const filePath = getStatusFilePath(sessionId);
-  
-  try {
-    const dataToSave = {
-      ...status,
+export function saveStatus(sessionId, playerDataOrFullObject) {
+  const filePath = getPlayerFilePath(sessionId);
+
+  // Handle both old format (just data) and new format (full object with metadata)
+  let fullObject;
+  if (playerDataOrFullObject.data) {
+    // New format: has metadata wrapper
+    fullObject = {
+      ...playerDataOrFullObject,
       lastUpdated: new Date().toISOString()
     };
-    
-    fs.writeFileSync(filePath, JSON.stringify(dataToSave, null, 2), 'utf-8');
-    return true;
-  } catch (error) {
-    console.error(`Error saving status for session ${sessionId}:`, error);
-    return false;
+  } else {
+    // Old format: just the data, need to load existing or create new
+    const existing = fs.existsSync(filePath)
+      ? JSON.parse(fs.readFileSync(filePath, 'utf-8'))
+      : { sessionId, createdAt: new Date().toISOString() };
+
+    fullObject = {
+      ...existing,
+      lastUpdated: new Date().toISOString(),
+      data: playerDataOrFullObject
+    };
   }
+
+  // Clean up inventory structure before saving
+  if (fullObject.data && fullObject.data.inventory) {
+    fullObject.data.inventory = cleanInventoryStructure(fullObject.data.inventory);
+  }
+
+  fs.writeFileSync(filePath, JSON.stringify(fullObject, null, 2), 'utf-8');
 }
 
-/**
- * Update specific status fields
- */
+
 export function updateStatus(sessionId, updates) {
   const status = loadStatus(sessionId);
-  
+
   if (!status) {
-    throw new Error('Status not found for session');
+    throw new Error('Player data not found for session');
   }
 
   // Deep merge updates
   const updatedStatus = deepMerge(status, updates);
   saveStatus(sessionId, updatedStatus);
-  
+
   return updatedStatus;
 }
 
-/**
- * Update character attributes
- */
-export function updateCharacter(sessionId, characterUpdates) {
-  return updateStatus(sessionId, { character: characterUpdates });
-}
 
-/**
- * Update attributes (strength, intelligence, etc.)
- */
-export function updateAttributes(sessionId, attributeUpdates) {
-  return updateStatus(sessionId, { attributes: attributeUpdates });
-}
-
-/**
- * Add item to inventory
- */
-export function addToInventory(sessionId, item) {
-  const status = loadStatus(sessionId);
-  
-  if (!status) {
-    throw new Error('Status not found for session');
-  }
-
-  const itemWithId = {
-    id: `item_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
-    name: item.name || item,
-    description: item.description || '',
-    quantity: item.quantity || 1,
-    addedAt: new Date().toISOString(),
-    ...item
-  };
-
-  status.inventory.push(itemWithId);
-  saveStatus(sessionId, status);
-  
-  return status;
-}
-
-/**
- * Remove item from inventory
- */
-export function removeFromInventory(sessionId, itemId) {
-  const status = loadStatus(sessionId);
-  
-  if (!status) {
-    throw new Error('Status not found for session');
-  }
-
-  status.inventory = status.inventory.filter(item => item.id !== itemId);
-  saveStatus(sessionId, status);
-  
-  return status;
-}
-
-/**
- * Use item from inventory
- */
 export function useItem(sessionId, itemIdOrName) {
   const status = loadStatus(sessionId);
-  
+
   if (!status) {
-    throw new Error('Status not found for session');
+    throw new Error('Player data not found for session');
   }
 
   // Find item by ID or name
-  const itemIndex = status.inventory.findIndex(item => 
+  const itemIndex = status.inventory.items.findIndex(item =>
     item.id === itemIdOrName || item.name === itemIdOrName
   );
-  
+
   if (itemIndex === -1) {
     throw new Error('Item not found in inventory');
   }
-  
-  const item = status.inventory[itemIndex];
-  
+
+  const item = status.inventory.items[itemIndex];
+
   // Decrease quantity or remove item
   if (item.quantity && item.quantity > 1) {
     item.quantity -= 1;
   } else {
-    status.inventory.splice(itemIndex, 1);
+    status.inventory.items.splice(itemIndex, 1);
   }
-  
+
   saveStatus(sessionId, status);
-  
+
   return {
     status,
     usedItem: item
@@ -270,162 +228,149 @@ export function useItem(sessionId, itemIdOrName) {
 }
 
 /**
- * Update location
+ * Extract explicit status changes from parsed narrative steps
+ * Handles [CHANGE:], [UNLOCK_SCENE:], and implicit item/relationship mentions
  */
-export function updateLocation(sessionId, location) {
-  return updateStatus(sessionId, { location });
-}
+function extractExplicitChanges(responseText, narrativeSteps) {
+  console.log('\n=== 🔍 Extracting explicit changes from narrative ===');
 
-/**
- * Set a game flag
- */
-export function setFlag(sessionId, flagName, value) {
-  const status = loadStatus(sessionId);
-  
-  if (!status) {
-    throw new Error('Status not found for session');
-  }
-
-  status.flags[flagName] = value;
-  saveStatus(sessionId, status);
-  
-  return status;
-}
-
-/**
- * Update relationship with a character
- */
-export function updateRelationship(sessionId, characterName, value) {
-  const status = loadStatus(sessionId);
-  
-  if (!status) {
-    throw new Error('Status not found for session');
-  }
-
-  status.relationships[characterName] = value;
-  saveStatus(sessionId, status);
-  
-  return status;
-}
-
-/**
- * Add achievement
- */
-export function addAchievement(sessionId, achievement) {
-  const status = loadStatus(sessionId);
-  
-  if (!status) {
-    throw new Error('Status not found for session');
-  }
-
-  const achievementWithId = {
-    id: `achievement_${Date.now()}`,
-    name: achievement.name || achievement,
-    description: achievement.description || '',
-    unlockedAt: new Date().toISOString(),
-    ...achievement
+  const changes = {
+    network: {},
+    stats_updates: {},
+    new_items: [],
+    removed_items: [],
+    unlocked_scenes: []
   };
 
-  status.achievements.push(achievementWithId);
-  saveStatus(sessionId, status);
-  
-  return status;
+  // Process each narrative step
+  narrativeSteps.forEach(step => {
+    if (step.type === 'hint') {
+      // Extract [CHANGE: character, attribute, delta] markers
+      if (step.changes && step.changes.length > 0) {
+        step.changes.forEach(change => {
+          if (change.characterId === '玩家' || change.characterId === 'player' || change.characterId === 'hero') {
+            // Player stats change
+            if (!changes.stats_updates[change.attribute]) {
+              changes.stats_updates[change.attribute] = 0;
+            }
+            changes.stats_updates[change.attribute] += change.delta;
+            console.log(`  ✓ Player ${change.attribute}: ${change.delta > 0 ? '+' : ''}${change.delta}`);
+          } else {
+            // NPC network relationship change
+            if (!changes.network[change.characterId]) {
+              changes.network[change.characterId] = { relationship: 0 };
+            }
+            changes.network[change.characterId].relationship += change.delta;
+            console.log(`  ✓ Network ${change.characterId} relationship: ${change.delta > 0 ? '+' : ''}${change.delta}`);
+          }
+        });
+      }
+
+      // Extract [CHANGE: RELATIONSHIP, NPC名字, delta] markers
+      if (step.relationshipChanges && step.relationshipChanges.length > 0) {
+        step.relationshipChanges.forEach(relChange => {
+          if (!changes.network[relChange.npcName]) {
+            changes.network[relChange.npcName] = { relationship: 0 };
+          }
+          changes.network[relChange.npcName].relationship += relChange.delta;
+          console.log(`  ✓ Network ${relChange.npcName} relationship: ${relChange.delta > 0 ? '+' : ''}${relChange.delta}`);
+        });
+      }
+
+      // Extract [CHANGE: 道具名称, 获得/丢失, 数量] markers
+      if (step.itemChanges && step.itemChanges.length > 0) {
+        step.itemChanges.forEach(itemChange => {
+          if (itemChange.action === '获得') {
+            changes.new_items.push({
+              name: itemChange.itemName,
+              quantity: itemChange.quantity
+            });
+            console.log(`  ✓ Item gained: ${itemChange.itemName} x${itemChange.quantity}`);
+          } else if (itemChange.action === '丢失') {
+            changes.removed_items.push({
+              name: itemChange.itemName,
+              quantity: itemChange.quantity
+            });
+            console.log(`  ✓ Item lost: ${itemChange.itemName} x${itemChange.quantity}`);
+          }
+        });
+      }
+    }
+  });
+
+  // Extract [UNLOCK_SCENE: scene_id] markers from hint text
+  const unlockPattern = /\[UNLOCK_SCENE:\s*([^\]]+)\]/g;
+  const unlockMatches = responseText.matchAll(unlockPattern);
+  for (const match of unlockMatches) {
+    const sceneId = match[1].trim();
+    if (!changes.unlocked_scenes.includes(sceneId)) {
+      changes.unlocked_scenes.push(sceneId);
+      console.log(`  ✓ Unlocked scene: ${sceneId}`);
+    }
+  }
+
+  console.log(`✅ Extracted ${Object.keys(changes.stats_updates).length} explicit stats changes`);
+  console.log(`✅ Extracted ${changes.unlocked_scenes.length} scene unlocks`);
+
+  return changes;
 }
 
 /**
- * Use LLM to parse game response and identify changes from current state
- * This identifies what changed in the response compared to current attributes
+ * Use LLM to parse implicit changes not covered by explicit markers
+ * This handles changes that are mentioned in narration/dialogue but not marked explicitly
  */
-export async function parseGameResponseChanges(responseText, currentStatus = {}) {
-  console.log('\n=== 🔍 parseGameResponseChanges CALLED ===');
-  console.log('Current status summary:', {
-    attributes: Object.keys(currentStatus.attributes || {}).length,
-    inventory: (currentStatus.inventory || []).length,
-    character: currentStatus.character || {}
-  });
-  console.log('Response text length:', responseText.length);
-  // console.log('Response preview:', responseText.substring(0, 500));
+async function parseImplicitChanges(responseText, currentStatus, explicitChanges) {
+  console.log('\n=== 🔍 Parsing implicit changes with LLM ===');
 
-  // Extract just attributes for comparison
-  const currentAttributes = currentStatus.attributes || {};
-  const currentInventory = currentStatus.inventory || [];
-  const currentCharacter = currentStatus.character || {};
+  // Extract stats for comparison
+  const currentStats = currentStatus.stats || {};
+  const currentInventory = currentStatus.inventory?.items || [];
+  const currentNetwork = currentStatus.network || {};
+  const currentCurrency = currentStatus.currency || {};
 
   try {
-    const prompt = `You are a game state analyzer. Analyze the game response and extract ALL attribute changes, item changes, and character stat changes.
+    const prompt = `You are a game state analyzer. The game already detected these EXPLICIT changes:
+- Stats: ${JSON.stringify(explicitChanges.stats_updates)}
+- Items: ${JSON.stringify(explicitChanges.new_items)}
+- Unlocked scenes: ${JSON.stringify(explicitChanges.unlocked_scenes)}
+
+Now find any ADDITIONAL implicit changes mentioned in the narrative that were NOT already detected.
 
 CURRENT STATE:
-Attributes: ${JSON.stringify(currentAttributes, null, 2)}
+Stats: ${JSON.stringify(currentStats, null, 2)}
 Inventory: ${currentInventory.map(i => i.name || i).join(', ')}
-Character: ${JSON.stringify(currentCharacter, null, 2)}
+Network: ${JSON.stringify(currentNetwork, null, 2)}
+Currency: ${JSON.stringify(currentCurrency, null, 2)}
 
-NEW GAME RESPONSE:
+GAME RESPONSE:
 ${responseText}
 
-EXTRACTION RULES:
-1. **Attributes** - Extract ANY numeric attributes mentioned:
-   - "力量：50" → {"力量": 50}
-   - "力量+2" or "获得经验：力量+2" → DELTA {"力量": +2}
-   - "力量:52(+2)" → ABSOLUTE {"力量": 52}
-   - Look for patterns: 属性名[：:]\s*数值, 属性名\+数值, 属性名:\s*\d+/\d+
+LOOK FOR:
+1. Items mentioned as obtained/lost (获得, 失去, 拾取, 丢弃, etc.)
+2. Stats changes (health, attack, defense, intellect, reputation, etc.)
+3. Currency changes (gold)
+4. NPC relationship changes in the network
+5. DO NOT duplicate changes already in explicit list
 
-2. **Items** - Extract inventory changes:
-   - "获得了X" → ADD {"name": "X", "quantity": 1}
-   - "失去了X" → REMOVE {"name": "X"}
-   - Look for patterns: 获得, 得到, 拿到, 失去, 使用, 消耗
-
-3. **Character Stats** - Extract health, energy, money, level changes:
-   - "生命值：85" or "health: 85" → {"health": 85}
-   - "金钱+100" → DELTA {"money": +100}
-
-Return ONLY valid JSON in this EXACT format:
+Return ONLY valid JSON (empty if no additional changes):
 {
-  "character": {
-    "health": 85,
-    "money": 150
-  },
-  "new_attributes": {
-    "新属性": 初始值
-  },
-  "changed_attributes": {
-    "已存在属性": 新绝对值
-  },
-  "delta_attributes": {
-    "属性名": 增量值
-  },
-  "new_items": [
-    {"name": "物品名", "description": "描述", "quantity": 1, "value": 0}
-  ],
-  "removed_items": [
-    {"name": "物品名"}
-  ],
-  "new_relationships": {
-    "character_name": value
-  }
-}
+  "network": {},
+  "stats": {},
+  "currency": {},
+  "new_items": [],
+  "removed_items": []
+}`;
 
-IMPORTANT:
-- Include ALL attributes found in the response, even if they seem similar to existing ones
-- For deltas: use positive or negative numbers (+2, -3)
-- If no changes detected in a category, omit that field or return empty object/array
-- Return ONLY JSON, no explanation, no markdown`;
-
-    console.log('🤖 Calling LLM for change detection...');
+    console.log('🤖 Calling LLM for implicit change detection...');
     const message = await anthropic.messages.create({
-      model: 'claude-sonnet-4-20250514',
-      max_tokens: 2048,
-      messages: [
-        {
-          role: 'user',
-          content: prompt
-        }
-      ]
+      model: 'claude-sonnet-4-5-20250929',
+      max_tokens: 1024,
+      messages: [{ role: 'user', content: prompt }]
     });
 
     const responseContent = message.content[0].text.trim();
-    // console.log('✅ LLM response:', responseContent);
 
-    // Try to extract JSON from response (handle markdown code blocks)
+    // Try to extract JSON from response
     let jsonText = responseContent;
     const jsonMatch = responseContent.match(/```json\s*([\s\S]*?)\s*```/) ||
                       responseContent.match(/```\s*([\s\S]*?)\s*```/) ||
@@ -434,526 +379,201 @@ IMPORTANT:
       jsonText = jsonMatch[0].replace(/```json|```/g, '').trim();
     }
 
-    // Parse the JSON response
     const parsedData = JSON.parse(jsonText);
-    console.log('✅ Parsed changes:', JSON.stringify(parsedData, null, 2));
-
+    console.log('✅ Implicit changes detected:', JSON.stringify(parsedData, null, 2));
     return parsedData;
   } catch (error) {
-    console.error('❌ Error parsing attributes with LLM:', error);
-    console.error('Error details:', error.message);
-    // Fallback to regex-based parsing
-    const fallbackResult = {
-      attributes: parseAttributesFromResponseRegex(responseText),
-      character: {},
-      new_attributes: {},
-      changed_attributes: parseAttributesFromResponseRegex(responseText),
-      delta_attributes: {},
+    console.error('❌ Error parsing implicit changes:', error);
+    return {
+      network: {},
+      stats: {},
+      currency: {},
       new_items: [],
       removed_items: []
     };
-    console.log('📋 Using regex fallback:', JSON.stringify(fallbackResult, null, 2));
-    return fallbackResult;
   }
 }
 
 /**
- * Parse attributes from Claude's response using regex (fallback method)
- * Extracts attributes from the character panel in Claude's response
- */
-export function parseAttributesFromResponseRegex(responseText) {
-  const attributes = {};
-  
-  try {
-    // Look for 核心属性成长 section
-    const attrPattern = /"核心属性成长":\s*{([^}]+)}/gs;
-    const match = responseText.match(attrPattern);
-    
-    if (match && match[0]) {
-      // Extract each attribute line
-      const lines = match[0].split('\n');
-      
-      for (const line of lines) {
-        // Match patterns like: "家族礼仪": "熟练 (38/100)"
-        const attrMatch = line.match(/"([^"]+)":\s*"[^(]*\((\d+)\/\d+\)/);
-        if (attrMatch) {
-          const attrName = attrMatch[1];
-          const attrValue = parseInt(attrMatch[2]);
-          if (!isNaN(attrValue)) {
-            attributes[attrName] = attrValue;
-          }
-        }
-      }
-    }
-    
-    // Also look for other attribute patterns in the response
-    // Pattern: 属性名: 数值/总数 or 属性名 (数值/总数)
-    const generalPattern = /([^\s:：]+)[：:]\s*(\d+)\/\d+/g;
-    const generalMatches = responseText.matchAll(generalPattern);
-    
-    for (const match of generalMatches) {
-      const attrName = match[1].trim();
-      const attrValue = parseInt(match[2]);
-      if (!isNaN(attrValue) && !attributes[attrName]) {
-        attributes[attrName] = attrValue;
-      }
-    }
-  } catch (error) {
-    console.error('Error parsing attributes:', error);
-  }
-  
-  return attributes;
-}
-
-/**
- * Parse attributes from response
- * Uses LLM parsing by default (if enabled), with regex fallback
- */
-export async function parseAttributesFromResponse(responseText) {
-  if (ENABLE_LLM_PARSING) {
-    return await parseAttributesWithLLM(responseText);
-  } else {
-    // Use regex-only parsing when LLM parsing is disabled
-    return { attributes: parseAttributesFromResponseRegex(responseText) };
-  }
-}
-
-/**
- * Debug function to help troubleshoot extraction issues
- */
-export function debugExtraction(responseText) {
-  console.log('=== EXTRACTION DEBUG ===');
-  console.log('Response length:', responseText.length);
-
-  // Test patterns
-  const patterns = [
-    /姓名：([^|\n]+)/g,
-    /年龄：(\d+)岁?/g,
-    /身高[：/]\s*(\d+cm)/g,
-    /体重[：/]\s*(\d+kg)/g,
-    /容貌[：]\s*(\d+)/g,
-    /月收入[：]\s*([^\n]+)/g,
-    /个人存款[：]\s*([^\n]+)/g,
-    /资产[：]\s*([^\n]+)/g
-  ];
-
-  patterns.forEach((pattern, i) => {
-    const matches = responseText.match(pattern);
-    console.log(`Pattern ${i}:`, matches);
-  });
-
-  return 'Debug completed - check console';
-}
-
-/**
- * Extract action options from game response
- * Supports multiple formats with priority:
- * 1. [ACTION: text] - Primary format (enforced by system prompt)
- * 2. **!! text !!** - PDF markers
- * 3. Numbered lists - Fallback only
- */
-export function extractActionOptions(responseText) {
-  console.log('\n=== 🎯 EXTRACTING ACTION OPTIONS ===');
-  console.log('Response length:', responseText.length);
-
-  const options = [];
-
-  // PRIORITY 1: Extract [ACTION: ...] format (PRIMARY)
-  const actionPattern = /\[ACTION:\s*(.+?)\]/g;
-  const actionMatches = responseText.matchAll(actionPattern);
-
-  let index = 1;
-  for (const match of actionMatches) {
-    const text = match[1].trim();
-    if (text) {
-      options.push({
-        id: `action_${index}`,
-        index: index,
-        text: text,
-        value: index.toString(),
-        source: 'action_marker'
-      });
-      console.log(`  ✓ Found [ACTION] option ${index}: ${text.substring(0, 50)}...`);
-      index++;
-    }
-  }
-
-  // If we found [ACTION: ...] format, return immediately (don't mix with other formats)
-  if (options.length > 0) {
-    console.log(`✅ Extracted ${options.length} action options using [ACTION: ...] format`);
-    return options;
-  }
-
-  // PRIORITY 2: Extract PDF markers **!! text !!**
-  const markerPattern = /\*\*!!\s*(.+?)\s*!!\*\*/g;
-  const markerMatches = responseText.matchAll(markerPattern);
-
-  index = 1;
-  for (const match of markerMatches) {
-    const text = match[1].trim();
-    if (text) {
-      options.push({
-        id: `marker_${index}`,
-        index: index,
-        text: text,
-        value: text,
-        source: 'pdf_marker'
-      });
-      console.log(`  ✓ Found PDF marker option ${index}: ${text.substring(0, 50)}...`);
-      index++;
-    }
-  }
-
-  // If we found PDF markers, return immediately
-  if (options.length > 0) {
-    console.log(`✅ Extracted ${options.length} action options using PDF markers`);
-    return options;
-  }
-
-  // PRIORITY 3: Fallback to numbered lists (LAST RESORT)
-  console.log('  ℹ️ No [ACTION] or PDF markers found, falling back to numbered lists...');
-
-  const lines = responseText.split('\n');
-  for (let i = 0; i < lines.length; i++) {
-    const line = lines[i].trim();
-    // Match lines that start with number followed by period or Chinese punctuation
-    const match = line.match(/^(\d+)[.、]\s*(.+)$/);
-    if (match) {
-      const numIndex = parseInt(match[1]);
-      const text = match[2].trim();
-
-      // Filter out table of contents or irrelevant numbered items
-      // Only include if text is substantial (more than 5 chars) and looks like an action
-      if (text.length > 5 && !text.match(/^(第|Chapter|\d+页|Page|目录|Table|Contents)/i)) {
-        options.push({
-          id: `option_${numIndex}`,
-          index: numIndex,
-          text: text,
-          value: numIndex.toString(),
-          source: 'numbered_list'
-        });
-        console.log(`  ⚠️ Found numbered option ${numIndex}: ${text.substring(0, 50)}...`);
-      }
-    }
-  }
-
-  // Remove duplicates
-  const uniqueOptions = [];
-  const seenTexts = new Set();
-
-  for (const option of options) {
-    const normalizedText = option.text.toLowerCase().replace(/\s+/g, '');
-    if (!seenTexts.has(normalizedText)) {
-      seenTexts.add(normalizedText);
-      uniqueOptions.push(option);
-    }
-  }
-
-  console.log(`✅ Extracted ${uniqueOptions.length} unique action options`);
-  if (uniqueOptions.length === 0) {
-    console.log('⚠️ No action options found in response');
-    // console.log('Response preview (first 500 chars):');
-    // console.log(responseText.substring(0, 500));
-    // console.log('\nResponse preview (last 500 chars):');
-    // console.log(responseText.substring(Math.max(0, responseText.length - 500)));
-  } else {
-    console.log('Options summary:', uniqueOptions.map(o => `[${o.source}] ${o.text.substring(0, 30)}...`));
-  }
-
-  return uniqueOptions;
-}
-
-/**
- * Parse Claude's response for status updates
- * Claude can include JSON in its response like:
- * {{STATUS_UPDATE: {"character": {"health": 90}, "location": "forest"}}}
- */
-export function parseStatusUpdates(responseText) {
-  const updates = {};
-  
-  // Look for status update markers in Claude's response
-  const statusUpdateRegex = /\{\{STATUS_UPDATE:\s*({[\s\S]*?})\}\}/g;
-  const matches = responseText.matchAll(statusUpdateRegex);
-  
-  for (const match of matches) {
-    try {
-      const update = JSON.parse(match[1]);
-      Object.assign(updates, update);
-    } catch (error) {
-      console.error('Error parsing status update:', error);
-    }
-  }
-  
-  return updates;
-}
-
-/**
- * Apply parsed status updates from Claude response using change detection
+ * Apply parsed status updates from Claude response using two-phase detection:
+ * 1. Extract explicit markers ([CHANGE:], [UNLOCK_SCENE:])
+ * 2. Use LLM to detect implicit changes in narrative
  */
 export async function applyClaudeUpdates(sessionId, responseText) {
   console.log('\n=== 🎮 applyClaudeUpdates CALLED ===');
   console.log('Session ID:', sessionId);
 
   try {
-    const updates = parseStatusUpdates(responseText);
-    console.log('📝 Parsed status updates from markers:', JSON.stringify(updates, null, 2));
-
     const currentStatus = loadStatus(sessionId);
     console.log('💾 Current status loaded:', {
       hasStatus: !!currentStatus,
-      currentAttributes: currentStatus?.attributes || {},
-      currentInventory: currentStatus?.inventory?.length || 0
+      currentStats: Object.keys(currentStatus?.stats || {}).length,
+      currentInventory: currentStatus?.inventory?.items?.length || 0
     });
 
-    if (currentStatus) {
-      // Use the new change detection approach - pass FULL status, not just attributes
-      const changes = await parseGameResponseChanges(responseText, currentStatus);
-      console.log('🔄 Changes detected:', JSON.stringify(changes, null, 2));
+    if (!currentStatus) {
+      console.warn('⚠️ No current status found for session');
+      return null;
+    }
 
-      // Apply changes to character
-      if (changes.character && Object.keys(changes.character).length > 0) {
-        updates.character = {
-          ...(currentStatus.character || {}),
-          ...(updates.character || {}),
-          ...changes.character
-        };
+    const updates = {};
+
+    // PHASE 1: Parse narrative structure and extract explicit changes
+    const narrativeData = parseNarrativeSteps(responseText);
+    const explicitChanges = extractExplicitChanges(responseText, narrativeData.steps);
+
+    // PHASE 2: Use LLM to detect implicit changes not covered by explicit markers
+    const implicitChanges = await parseImplicitChanges(responseText, currentStatus, explicitChanges);
+
+    // Merge explicit and implicit changes
+    const changes = {
+      network: { ...explicitChanges.network, ...(implicitChanges.network || {}) },
+      stats: { ...explicitChanges.stats_updates, ...(implicitChanges.stats || {}) },
+      currency: { ...(implicitChanges.currency || {}) },
+      new_items: [...explicitChanges.new_items, ...(implicitChanges.new_items || [])],
+      removed_items: [...explicitChanges.removed_items, ...(implicitChanges.removed_items || [])],
+      unlocked_scenes: explicitChanges.unlocked_scenes
+    };
+
+    console.log('🔄 Total changes detected:', JSON.stringify(changes, null, 2));
+
+    // Apply changes to network (includes relationship data)
+    if (changes.network && Object.keys(changes.network).length > 0) {
+      const currentNetwork = currentStatus.network || {};
+      // Deep merge network data to preserve existing relationship values
+      const mergedNetwork = { ...currentNetwork };
+      for (const [npcName, npcData] of Object.entries(changes.network)) {
+        if (mergedNetwork[npcName]) {
+          // Merge with existing - add relationship deltas
+          mergedNetwork[npcName] = {
+            ...mergedNetwork[npcName],
+            relationship: (mergedNetwork[npcName].relationship || 0) + (npcData.relationship || 0)
+          };
+        } else {
+          mergedNetwork[npcName] = npcData;
+        }
       }
+      updates.network = mergedNetwork;
+    }
 
-      // Apply new attributes (these are completely new)
-      if (changes.new_attributes && Object.keys(changes.new_attributes).length > 0) {
-        updates.attributes = {
-          ...(currentStatus.attributes || {}),
-          ...(updates.attributes || {}),
-          ...changes.new_attributes
-        };
-      }
+    // Apply stats updates
+    if (changes.stats && Object.keys(changes.stats).length > 0) {
+      console.log('🔄 Applying stats updates...');
+      updates.stats = {
+        ...(currentStatus.stats || {}),
+        ...changes.stats
+      };
+      console.log('✅ Stats updated:', updates.stats);
+    }
 
-      // Apply changed attributes (these replace existing values)
-      if (changes.changed_attributes && Object.keys(changes.changed_attributes).length > 0) {
-        updates.attributes = {
-          ...(currentStatus.attributes || {}),
-          ...(updates.attributes || {}),
-          ...changes.changed_attributes
-        };
-      }
+    // Apply currency updates (hot update support)
+    if (changes.currency && Object.keys(changes.currency).length > 0) {
+      console.log('🔄 Applying currency updates...');
+      updates.currency = {
+        ...(currentStatus.currency || {}),
+        ...changes.currency
+      };
+      console.log('✅ Currency updated:', updates.currency);
+    }
 
-      // Apply delta attributes (these modify existing values)
-      if (changes.delta_attributes && Object.keys(changes.delta_attributes).length > 0) {
-        const currentAttributes = { ...(currentStatus.attributes || {}) };
-        Object.entries(changes.delta_attributes).forEach(([key, delta]) => {
-          const currentValue = currentAttributes[key] || 0;
-          currentAttributes[key] = currentValue + delta;
-        });
+    // Handle inventory changes (both new and removed items)
+    const hasNewItems = changes.new_items && Array.isArray(changes.new_items) && changes.new_items.length > 0;
+    const hasRemovedItems = changes.removed_items && Array.isArray(changes.removed_items) && changes.removed_items.length > 0;
 
-        updates.attributes = {
-          ...(currentStatus.attributes || {}),
-          ...(updates.attributes || {}),
-          ...currentAttributes
-        };
-      }
+    if (hasNewItems || hasRemovedItems) {
+      const currentInventory = currentStatus.inventory?.items || [];
+      const inventoryMap = new Map();
 
-      // Handle new items
-      if (changes.new_items && Array.isArray(changes.new_items) && changes.new_items.length > 0) {
-        const currentInventory = currentStatus.inventory || [];
-        const inventoryMap = new Map();
+      // Build map of current inventory
+      currentInventory.forEach(item => {
+        const key = item.name || item;
+        inventoryMap.set(key, item);
+      });
 
-        // Build map of current inventory
-        currentInventory.forEach(item => {
-          const key = item.name || item;
-          inventoryMap.set(key, item);
-        });
-
-        // Add new items
+      // Add new items
+      if (hasNewItems) {
         changes.new_items.forEach(newItem => {
-          const itemName = newItem.name || newItem;
+          const itemName = typeof newItem === 'string' ? newItem : (newItem.name || newItem);
           const existing = inventoryMap.get(itemName);
 
-          if (!existing) {
-            // Add new item
+          if (existing) {
+            // Item exists - update quantity
+            const addQuantity = typeof newItem === 'object' ? (newItem.quantity || 1) : 1;
+            existing.quantity = (existing.quantity || 1) + addQuantity;
+          } else {
+            // Add new item - only spread if newItem is an object, not a string
+            const itemData = typeof newItem === 'object' ? newItem : {};
             inventoryMap.set(itemName, {
-              id: `item_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+              id: `item_${Date.now()}_${Math.random().toString(36).substring(2, 11)}`,
               name: itemName,
-              description: newItem.description || `${itemName} - 从游戏中获得`,
-              quantity: newItem.quantity || 1,
-              value: newItem.value || 0,
-              addedAt: new Date().toISOString(),
-              ...newItem
+              description: itemData.description || `${itemName} - 从游戏中获得`,
+              quantity: itemData.quantity || 1,
+              value: itemData.value || 0,
+              addedAt: new Date().toISOString()
             });
           }
         });
-
-        updates.inventory = Array.from(inventoryMap.values());
       }
 
-      // Handle removed items
-      if (changes.removed_items && Array.isArray(changes.removed_items) && changes.removed_items.length > 0) {
-        const currentInventory = currentStatus.inventory || [];
-        const inventoryMap = new Map();
-
-        // Build map of current inventory
-        currentInventory.forEach(item => {
-          const key = item.name || item;
-          inventoryMap.set(key, item);
-        });
-
-        // Remove items
+      // Remove items or decrease quantity
+      if (hasRemovedItems) {
         changes.removed_items.forEach(removedItem => {
-          const itemName = removedItem.name || removedItem;
-          inventoryMap.delete(itemName);
-        });
+          const itemName = typeof removedItem === 'string' ? removedItem : (removedItem.name || removedItem);
+          const quantityToRemove = typeof removedItem === 'object' ? (removedItem.quantity || 1) : 1;
+          const existing = inventoryMap.get(itemName);
 
-        updates.inventory = Array.from(inventoryMap.values());
+          if (existing) {
+            const currentQuantity = existing.quantity || 1;
+            if (currentQuantity > quantityToRemove) {
+              // Decrease quantity
+              existing.quantity = currentQuantity - quantityToRemove;
+            } else {
+              // Remove item completely
+              inventoryMap.delete(itemName);
+            }
+          }
+        });
       }
 
-      // Handle relationships
-      if (changes.new_relationships && Object.keys(changes.new_relationships).length > 0) {
-        updates.relationships = {
-          ...(currentStatus.relationships || {}),
-          ...(updates.relationships || {}),
-          ...changes.new_relationships
-        };
+      // Clean structure - only keep the items array, remove numeric keys
+      updates.inventory = {
+        items: Array.from(inventoryMap.values())
+      };
+    }
+
+    // Handle unlocked scenes
+    if (changes.unlocked_scenes && Array.isArray(changes.unlocked_scenes) && changes.unlocked_scenes.length > 0) {
+      const currentUnlockedScenes = currentStatus.unlockedScenes || [];
+      const newlyUnlockedScenes = changes.unlocked_scenes.filter(
+        sceneId => !currentUnlockedScenes.includes(sceneId)
+      );
+
+      if (newlyUnlockedScenes.length > 0) {
+        updates.unlockedScenes = [...currentUnlockedScenes, ...newlyUnlockedScenes];
+        console.log(`🗺️ Unlocked new scenes: ${newlyUnlockedScenes.join(', ')}`);
       }
     }
 
     if (Object.keys(updates).length > 0) {
-      console.log('✅ Applying updates to status:', JSON.stringify(updates, null, 2));
+      console.log('✅ Applying updates to player data');
       const updatedStatus = updateStatus(sessionId, updates);
-      console.log('✅ Status updated successfully');
+
+      // Sync network relationships to scene data
+      if (updates.network) {
+        syncNetworkToScenes(sessionId, updatedStatus.network);
+      }
+
+      console.log('✅ Player data updated successfully');
       return updatedStatus;
     }
 
     console.log('⚠️ No updates to apply');
-    return loadStatus(sessionId);
+    return currentStatus;
   } catch (error) {
     console.error('❌ Error applying Claude updates:', error);
     console.error('Error stack:', error.stack);
     // Return current status on error
     return loadStatus(sessionId);
   }
-}
-
-
-export function getStatusSummary(sessionId) {
-  const status = loadStatus(sessionId);
-  
-  if (!status) {
-    return null;
-  }
-
-  return {
-    character: status.character,
-    attributes: status.attributes,
-    location: status.location,
-    inventoryCount: status.inventory.length,
-    achievementCount: status.achievements.length,
-    lastUpdated: status.lastUpdated
-  };
-}
-
-
-export function exportStatus(sessionId) {
-  return loadStatus(sessionId);
-}
-
-
-export function importStatus(sessionId, statusData) {
-  saveStatus(sessionId, statusData);
-  return statusData;
-}
-
-export function deleteStatus(sessionId) {
-  const prettyPath = getStatusFilePath(sessionId);
-  const legacyPath = path.join(SAVES_DIR, `${sessionId}.json`);
-  
-  if (fs.existsSync(prettyPath)) {
-    fs.unlinkSync(prettyPath);
-    return true;
-  }
-  if (fs.existsSync(legacyPath)) {
-    fs.unlinkSync(legacyPath);
-    return true;
-  }
-  return false;
-}
-
-/**
- * List all saved sessions
- */
-export function listAllSessions() {
-  if (!fs.existsSync(SAVES_DIR)) {
-    return [];
-  }
-
-  const files = fs.readdirSync(SAVES_DIR);
-  const sessions = [];
-
-  for (const file of files) {
-    // Skip settings files and metadata files
-    if (!file.endsWith('.json')) continue;
-    if (file.startsWith('settings_')) continue;
-    if (file.endsWith('_meta.json')) continue;
-
-    try {
-      const fullPath = path.join(SAVES_DIR, file);
-      const data = fs.readFileSync(fullPath, 'utf-8');
-      const status = JSON.parse(data);
-      const sessionId = status.sessionId || file.replace('.json', '');
-      if (status) {
-        sessions.push({
-          sessionId,
-          createdAt: status.createdAt,
-          lastUpdated: status.lastUpdated,
-          characterName: status.character?.name || 'Player',
-          location: status.location
-        });
-      }
-    } catch (e) {
-      // ignore unreadable files
-    }
-  }
-
-  return sessions;
-}
-
-/**
- * Deep merge objects
- */
-function deepMerge(target, source) {
-  const output = { ...target };
-  
-  for (const key in source) {
-    if (source[key] && typeof source[key] === 'object' && !Array.isArray(source[key])) {
-      if (target[key] && typeof target[key] === 'object') {
-        output[key] = deepMerge(target[key], source[key]);
-      } else {
-        output[key] = source[key];
-      }
-    } else {
-      output[key] = source[key];
-    }
-  }
-  
-  return output;
-}
-
-export function getStatusUpdatePrompt(status) {
-  const attributesList = Object.entries(status.attributes || {})
-    .map(([key, value]) => `- ${key}：${value}`)
-    .join('\n');
-  
-  return `
-当前角色状态：
-- 姓名：${status.character.name}
-- 等级：${status.character.level}
-- 生命值：${status.character.health}/${status.character.maxHealth}
-- 能量：${status.character.energy}/${status.character.maxEnergy}
-- 金钱：${status.character.money}
-- 位置：${status.location}
-- 物品数量：${status.inventory.length}
-
-${attributesList ? `属性：\n${attributesList}` : '属性：(将从你的回复中自动提取)'}
-
-系统会自动从你的回复中提取"核心属性成长"或类似格式的属性数据。
-`.trim();
 }
 

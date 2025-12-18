@@ -1,7 +1,12 @@
 node_modules/
 uploads/
-game_saves/
 .env
 *.log
 .DS_Store
-
+.tatus
+test/
+pdf_data/
+cf/
+public/
+game_saves/
+visual_saves/

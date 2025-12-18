@@ -1,40 +1,61 @@
-import { processPlayerAction, processPlayerActionStreaming, getSession } from '../services/gameService.js';
-import {
-  exportAllGameData,
-  exportLatestAction
-} from '../services/exportService.js';
+import { processPlayerAction, getSession } from '../services/gameService.js';
+import { completeGameSessionByParams } from '../login/controller/gamesController.js';
+import { loadGameData } from '../services/gameInitializationService.js';
+import { loadStatus } from '../services/statusService.js';
 
 // Store active SSE connections
 const activeConnections = new Map();
 
 /**
- * SSE connection for real-time game updates
+ * SSE connection for game session streaming
+ * GET /api/backend/game/session/:sessionId/stream
  */
-export const streamGameEvents = (req, res) => {
+export const connectToSessionStream = (req, res) => {
   const { sessionId } = req.params;
 
   // Set SSE headers
   res.setHeader('Content-Type', 'text/event-stream');
   res.setHeader('Cache-Control', 'no-cache');
   res.setHeader('Connection', 'keep-alive');
-  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('X-Accel-Buffering', 'no'); // Disable nginx buffering
 
   // Send initial connection event
-  res.write(`data: ${JSON.stringify({ type: 'connected', sessionId, timestamp: new Date().toISOString() })}\n\n`);
+  res.write(`data: ${JSON.stringify({
+    type: 'connected',
+    sessionId,
+    message: 'Connected to game session stream',
+    timestamp: new Date().toISOString()
+  })}\n\n`);
 
   // Store connection
-  activeConnections.set(sessionId, res);
+  if (!activeConnections.has(sessionId)) {
+    activeConnections.set(sessionId, new Set());
+  }
+  activeConnections.get(sessionId).add(res);
+
+  console.log(`✅ SSE connection opened for session: ${sessionId}`);
 
   // Handle client disconnect
   req.on('close', () => {
-    activeConnections.delete(sessionId);
-    console.log(`SSE connection closed for session: ${sessionId}`);
+    const connections = activeConnections.get(sessionId);
+    if (connections) {
+      connections.delete(res);
+      if (connections.size === 0) {
+        activeConnections.delete(sessionId);
+      }
+    }
+    console.log(`❌ SSE connection closed for session: ${sessionId}`);
   });
 
   // Send heartbeat every 30 seconds to keep connection alive
   const heartbeat = setInterval(() => {
-    if (activeConnections.has(sessionId)) {
-      res.write(`:heartbeat\n\n`);
+    const connections = activeConnections.get(sessionId);
+    if (connections && connections.has(res)) {
+      try {
+        res.write(`:heartbeat\n\n`);
+      } catch (error) {
+        clearInterval(heartbeat);
+      }
     } else {
       clearInterval(heartbeat);
     }
@@ -43,432 +64,652 @@ export const streamGameEvents = (req, res) => {
 
 /**
  * Send action with SSE streaming response
+ * POST /api/backend/game/session/:sessionId/stream/action
  */
 export const sendActionWithStream = async (req, res) => {
-  const { sessionId } = req.params;
-  const { action } = req.body;
-
-  if (!action) {
-    return res.status(400).json({ error: 'action is required' });
-  }
-
-  const connection = activeConnections.get(sessionId);
-
-  if (!connection) {
-    return res.status(400).json({
-      error: 'No active SSE connection for this session. Please connect to /api/game/stream/:sessionId first.'
-    });
-  }
-
   try {
-    // Send action received event
-    connection.write(`data: ${JSON.stringify({
-      type: 'action_received',
-      action,
-      timestamp: new Date().toISOString()
-    })}\n\n`);
+    const { sessionId } = req.params;
+    const { action } = req.body;
 
-    // Send processing event
-    connection.write(`data: ${JSON.stringify({
-      type: 'processing',
-      message: 'Processing your action...',
-      timestamp: new Date().toISOString()
-    })}\n\n`);
-
-    // Process the action
-    const result = await processPlayerAction(sessionId, action);
-
-    // Send response chunks (simulate streaming for now, can be enhanced with actual streaming from Claude)
-    const responseChunks = chunkText(result.response, 50); // Increased chunk size for sentence-based splitting
-    for (let i = 0; i < responseChunks.length; i++) {
-      connection.write(`data: ${JSON.stringify({
-        type: 'response_chunk',
-        chunk: responseChunks[i],
-        index: i,
-        total: responseChunks.length,
-        timestamp: new Date().toISOString()
-      })}\n\n`);
-      // Delay between chunks for better streaming effect
-      await new Promise(resolve => setTimeout(resolve, 200)); // Increased delay to 200ms
-    }
-
-    // Send game state update
-    connection.write(`data: ${JSON.stringify({
-      type: 'state_update',
-      gameState: result.gameState,
-      characterStatus: result.characterStatus,
-      timestamp: new Date().toISOString()
-    })}\n\n`);
-
-    // Send action options
-    if (result.actionOptions && result.actionOptions.length > 0) {
-      connection.write(`data: ${JSON.stringify({
-        type: 'action_options',
-        options: result.actionOptions,
-        timestamp: new Date().toISOString()
-      })}\n\n`);
-    }
-
-    // Send complete event
-    connection.write(`data: ${JSON.stringify({
-      type: 'complete',
-      timestamp: new Date().toISOString()
-    })}\n\n`);
-
-    // Export data for colleague's frontend
-    const session = getSession(sessionId);
-    if (session) {
-      exportAllGameData(sessionId, session);
-      exportLatestAction(sessionId, {
-        action,
-        response: result.response,
-        gameState: result.gameState,
-        characterStatus: result.characterStatus,
-        actionOptions: result.actionOptions
+    if (!action) {
+      return res.status(400).json({
+        success: false,
+        error: 'action is required'
       });
     }
 
-    // Send acknowledgment to the action sender
-    res.json({
-      success: true,
-      message: 'Action processed and streamed to SSE connection'
+    // Set SSE headers
+    res.setHeader('Content-Type', 'text/event-stream');
+    res.setHeader('Cache-Control', 'no-cache');
+    res.setHeader('Connection', 'keep-alive');
+    res.setHeader('X-Accel-Buffering', 'no');
+
+    // Send initial event
+    res.write(`data: ${JSON.stringify({
+      type: 'processing',
+      message: 'Processing your action...',
+      action
+    })}\n\n`);
+
+    // Process action with streaming
+    const result = await processPlayerAction(sessionId, action, (chunk) => {
+      // Stream LLM response chunks as they arrive
+      res.write(`data: ${JSON.stringify({
+        type: 'chunk',
+        content: chunk
+      })}\n\n`);
     });
 
-  } catch (error) {
-    console.error('SSE action error:', error);
-
-    // Send error event to SSE connection
-    if (connection) {
-      connection.write(`data: ${JSON.stringify({
+    // Get session to load files
+    const session = getSession(sessionId);
+    if (!session) {
+      res.write(`data: ${JSON.stringify({
         type: 'error',
-        error: error.message,
-        timestamp: new Date().toISOString()
+        error: 'Session not found'
       })}\n\n`);
+      res.end();
+      return;
     }
 
-    res.status(500).json({
+    const identifier = session.isPreProcessed ? sessionId : session.fileId;
+    const isSessionId = session.isPreProcessed || false;
+    const gameData = loadGameData(identifier, isSessionId);
+    const playerData = loadStatus(sessionId);
+
+    // Send completion event with all data
+    res.write(`data: ${JSON.stringify({
+      type: 'complete',
+      success: true,
+      response: result.response,
+      actionOptions: result.actionOptions,
+      gameState: result.gameState,
+      characterStatus: result.characterStatus,
+      isInitialized: result.isInitialized,
+      updatedFiles: {
+        lore: gameData?.backgroundData || null,
+        player: playerData || null,
+        items: gameData?.itemData || null,
+        scenes: gameData?.worldData || null
+      },
+      timestamp: new Date().toISOString()
+    })}\n\n`);
+
+    // Send final completion marker
+    res.write(`event: complete\ndata: ${JSON.stringify({ success: true })}\n\n`);
+    res.end();
+
+  } catch (error) {
+    console.error('Send action with stream error:', error);
+    res.write(`data: ${JSON.stringify({
+      type: 'error',
       error: 'Failed to process action',
+      message: error.message
+    })}\n\n`);
+    res.end();
+  }
+};
+
+/**
+ * Send action with TRUE streaming from Claude API
+ * POST /api/backend/game/session/:sessionId/stream/action-live
+ */
+export const sendActionWithLiveStream = async (req, res) => {
+  try {
+    const { sessionId } = req.params;
+    const { action } = req.body;
+
+    if (!action) {
+      return res.status(400).json({
+        success: false,
+        error: 'action is required'
+      });
+    }
+
+    // Set SSE headers
+    res.setHeader('Content-Type', 'text/event-stream');
+    res.setHeader('Cache-Control', 'no-cache');
+    res.setHeader('Connection', 'keep-alive');
+    res.setHeader('X-Accel-Buffering', 'no');
+
+    // Send initial event
+    res.write(`data: ${JSON.stringify({
+      type: 'start',
+      message: 'Starting narrative generation...',
+      action
+    })}\n\n`);
+
+    // Process action with TRUE streaming from Claude (now sends structured steps)
+    const result = await processPlayerAction(sessionId, action, (data, index) => {
+      // The chunk is already JSON string from parseNarrativeSteps
+      res.write(`data: ${data}\n`);
+    });
+
+    // Get session and load files
+    const session = getSession(sessionId);
+    if (!session) {
+      res.write(`data: ${JSON.stringify({
+        type: 'error',
+        error: 'Session not found'
+      })}\n\n`);
+      res.end();
+      return;
+    }
+
+    const identifier = session.isPreProcessed ? sessionId : session.fileId;
+    const isSessionId = session.isPreProcessed || false;
+    const gameData = loadGameData(identifier, isSessionId);
+    const playerData = loadStatus(sessionId);
+
+    // Send final completion event with all data
+    res.write(`data: ${JSON.stringify({
+      type: 'data',
+      success: true,
+      response: result.response,
+      narrativeSteps: result.narrativeSteps,
+      actionOptions: result.actionOptions,
+      gameState: result.gameState,
+      characterStatus: result.characterStatus,
+      completedMissions: result.completedMissions,
+      newMission: result.newMission,
+      newAchievements: result.newAchievements,
+      isInitialized: result.isInitialized,
+      updatedFiles: {
+        lore: gameData?.backgroundData || null,
+        player: playerData || null,
+        items: gameData?.itemData || null,
+        scenes: gameData?.worldData || null
+      },
+      timestamp: new Date().toISOString()
+    })}\n\n`);
+
+    res.write(`event: done\ndata: ${JSON.stringify({ success: true })}\n\n`);
+    res.end();
+
+  } catch (error) {
+    console.error('Live stream error:', error);
+    res.write(`data: ${JSON.stringify({
+      type: 'error',
+      error: 'Failed to process action',
+      message: error.message
+    })}\n\n`);
+    res.end();
+  }
+};
+
+/**
+ * Broadcast message to all connections for a session
+ */
+export const broadcastToSession = (sessionId, data) => {
+  const connections = activeConnections.get(sessionId);
+  if (connections) {
+    const message = `data: ${JSON.stringify(data)}\n\n`;
+    connections.forEach(res => {
+      try {
+        res.write(message);
+      } catch (error) {
+        console.error('Error broadcasting to connection:', error);
+      }
+    });
+  }
+};
+
+/**
+ * Get active connections info (for debugging)
+ * GET /api/backend/debug/connections
+ */
+export const getActiveConnections = (req, res) => {
+  const info = Array.from(activeConnections.entries()).map(([sessionId, connections]) => ({
+    sessionId,
+    connectionCount: connections.size
+  }));
+
+  res.json({
+    success: true,
+    totalSessions: activeConnections.size,
+    connections: info
+  });
+};
+
+// ============================================
+// BUILDING INTERACTION WITH SSE STREAMING
+// ============================================
+
+/**
+ * Building interaction with SSE streaming
+ * POST /api/backend/game/session/:sessionId/building-interaction/stream
+ */
+export const buildingInteractionWithStream = async (req, res) => {
+  try {
+    const { sessionId } = req.params;
+    const { sceneId, buildingId, action, branchId, turnNumber } = req.body;
+
+    // Validate required inputs
+    if (!sceneId) {
+      return res.status(400).json({
+        success: false,
+        error: 'sceneId is required'
+      });
+    }
+
+    if (!buildingId) {
+      return res.status(400).json({
+        success: false,
+        error: 'buildingId is required'
+      });
+    }
+
+    if (!action) {
+      return res.status(400).json({
+        success: false,
+        error: 'action is required'
+      });
+    }
+
+    const currentTurn = turnNumber || 1;
+    const maxTurns = 5;
+
+    // Check turn limit
+    if (currentTurn > maxTurns) {
+      return res.status(400).json({
+        success: false,
+        error: 'Maximum turns exceeded',
+        message: `Building interactions are limited to ${maxTurns} turns`
+      });
+    }
+
+    // Set SSE headers
+    res.setHeader('Content-Type', 'text/event-stream');
+    res.setHeader('Cache-Control', 'no-cache');
+    res.setHeader('Connection', 'keep-alive');
+    res.setHeader('X-Accel-Buffering', 'no');
+
+    // Send initial event
+    res.write(`data: ${JSON.stringify({
+      type: 'start',
+      message: 'Processing building interaction...',
+      building: buildingId,
+      action,
+      turnNumber: currentTurn,
+      maxTurns
+    })}\n\n`);
+
+    const session = getSession(sessionId);
+    if (!session) {
+      res.write(`data: ${JSON.stringify({
+        type: 'error',
+        error: 'Session not found'
+      })}\n\n`);
+      res.end();
+      return;
+    }
+
+    // Load game data (use session directory if pre-processed)
+    const identifier = session.isPreProcessed ? sessionId : session.fileId;
+    const isSessionId = session.isPreProcessed || false;
+    const gameData = loadGameData(identifier, isSessionId);
+    if (!gameData || !gameData.worldData) {
+      res.write(`data: ${JSON.stringify({
+        type: 'error',
+        error: 'Game data not found'
+      })}\n\n`);
+      res.end();
+      return;
+    }
+
+    // Find the scene
+    const scene = gameData.worldData[sceneId];
+    if (!scene) {
+      res.write(`data: ${JSON.stringify({
+        type: 'error',
+        error: 'Scene not found'
+      })}\n\n`);
+      res.end();
+      return;
+    }
+
+    // Find the building
+    const building = scene.buildings?.find(b => b.id === buildingId);
+    if (!building) {
+      res.write(`data: ${JSON.stringify({
+        type: 'error',
+        error: 'Building not found'
+      })}\n\n`);
+      res.end();
+      return;
+    }
+
+    // Load player data
+    const playerData = loadStatus(sessionId);
+    if (!playerData) {
+      res.write(`data: ${JSON.stringify({
+        type: 'error',
+        error: 'Player data not found',
+        message: 'No player data exists for this session. Please create a game session first.'
+      })}\n\n`);
+      res.end();
+      return;
+    }
+
+    // Store player data before for change detection
+    const playerDataBefore = JSON.parse(JSON.stringify(playerData));
+
+    let fullResponse = '';
+
+    // Process the building interaction with streaming
+    const { processBuildingInteraction } = await import('../services/gameService.js');
+
+    const result = await processBuildingInteraction(
+      sessionId,
+      {
+        scene,
+        building,
+        action,
+        branchId,
+        turnNumber: currentTurn,
+        maxTurns,
+        playerData: playerData.data,
+        session: session  // Pass entire session object
+      },
+      // Stream callback
+      (chunk, index) => {
+        fullResponse += chunk;
+        res.write(`data: ${JSON.stringify({
+          type: 'stream',
+          content: chunk,
+          chunkIndex: index
+        })}\n\n`);
+      }
+    );
+
+    // Load updated data to detect changes
+    const updatedPlayerData = loadStatus(sessionId);
+    const updatedGameData = loadGameData(identifier, isSessionId);
+
+    // Detect state changes
+    const stateChanges = detectStateChanges(
+      playerDataBefore,
+      updatedPlayerData
+    );
+
+    // Determine if user can continue
+    const canContinue = currentTurn < maxTurns && !result.shouldEnd;
+
+    // Send completion event with all data
+    res.write(`data: ${JSON.stringify({
+      type: 'complete',
+      success: true,
+      branchId: result.branchId,
+      turnNumber: currentTurn,
+      maxTurns,
+      canContinue,
+      building: {
+        id: building.id,
+        name: building.name,
+        description: building.description
+      },
+      narrative: result.narrative,
+      options: result.options,
+      stateChanges,
+      characterStatus: updatedPlayerData,
+      updatedFiles: {
+        lore: updatedGameData.backgroundData,
+        player: updatedPlayerData,
+        items: updatedGameData.itemData,
+        scenes: updatedGameData.worldData
+      },
+      metadata: result.metadata,
+      timestamp: new Date().toISOString()
+    })}\n\n`);
+
+    // Send final completion marker
+    res.write(`event: complete\ndata: ${JSON.stringify({ success: true })}\n\n`);
+    res.end();
+
+  } catch (error) {
+    console.error('Building interaction stream error:', error);
+    res.write(`data: ${JSON.stringify({
+      type: 'error',
+      error: 'Failed to process building interaction',
+      message: error.message
+    })}\n\n`);
+    res.end();
+  }
+};
+
+/**
+ * Building feature interaction with SSE streaming (single-turn)
+ * POST /api/backend/game/session/:sessionId/building-feature/stream
+ */
+export const buildingFeatureInteractionWithStream = async (req, res) => {
+  try {
+    const { sessionId } = req.params;
+    const { sceneId, buildingId, feature, selectedOption } = req.body;
+
+    if (!buildingId) {
+      return res.status(400).json({
+        success: false,
+        error: 'buildingId is required'
+      });
+    }
+
+    if (!feature) {
+      return res.status(400).json({
+        success: false,
+        error: 'feature is required'
+      });
+    }
+
+    // Set SSE headers
+    res.setHeader('Content-Type', 'text/event-stream');
+    res.setHeader('Cache-Control', 'no-cache');
+    res.setHeader('Connection', 'keep-alive');
+    res.setHeader('X-Accel-Buffering', 'no');
+
+    // Send initial event
+    res.write(`data: ${JSON.stringify({
+      type: 'start',
+      message: 'Processing building feature interaction...',
+      buildingId,
+      feature,
+      selectedOption
+    })}\n\n`);
+
+    // Load player data before interaction for change detection
+    const playerDataBefore = loadStatus(sessionId);
+    if (!playerDataBefore) {
+      res.write(`data: ${JSON.stringify({
+        type: 'error',
+        error: 'Player data not found',
+        message: 'No player data exists for this session. Please create a game session first.'
+      })}\n\n`);
+      res.end();
+      return;
+    }
+
+    let fullResponse = '';
+
+    // Process the building feature interaction with streaming
+    const { processBuildingFeatureInteraction } = await import('../services/buildingInteractionService.js');
+
+    const result = await processBuildingFeatureInteraction(
+      sessionId,
+      sceneId,
+      buildingId,
+      feature,
+      selectedOption,
+      // Stream callback
+      (chunk) => {
+        fullResponse += chunk;
+        res.write(`data: ${JSON.stringify({
+          type: 'stream',
+          content: chunk
+        })}\n\n`);
+      }
+    );
+
+    // Load updated player data to detect changes
+    const updatedPlayerData = loadStatus(sessionId);
+
+    // Detect state changes
+    const stateChanges = detectStateChanges(
+      playerDataBefore,
+      updatedPlayerData
+    );
+
+    // Upload session data to MinIO (after building interaction)
+    try {
+      const session = getSession(sessionId);
+      if (session) {
+        const fileId = session.sourceFileId || session.fileId;
+        await completeGameSessionByParams(sessionId, 'public/game_data', fileId);
+        console.log(`✅ [Building Interaction] Session data uploaded to MinIO: ${sessionId}`);
+      }
+    } catch (uploadError) {
+      console.error('[MinIO Upload] Failed to upload session data after building interaction:', uploadError.message);
+    }
+
+    // Send completion event
+    res.write(`data: ${JSON.stringify({
+      type: 'complete',
+      success: true,
+      interactionType: result.type,
+      buildingId: result.buildingId,
+      feature: result.feature,
+      selectedOption: result.selectedOption,
+      response: result.response,
+      options: result.options,
+      canContinue: result.canContinue,
+      stateChanges,
+      characterStatus: updatedPlayerData,
+      timestamp: new Date().toISOString()
+    })}\n\n`);
+
+    // Send final completion marker
+    res.write(`event: complete\ndata: ${JSON.stringify({ success: true })}\n\n`);
+    res.end();
+
+  } catch (error) {
+    console.error('Building feature interaction stream error:', error);
+    res.write(`data: ${JSON.stringify({
+      type: 'error',
+      error: 'Failed to process building feature interaction',
+      message: error.message
+    })}\n\n`);
+    res.end();
+  }
+};
+
+/**
+ * Get building features
+ * GET /api/backend/game/session/:sessionId/scene/:sceneId/building/:buildingId/features
+ */
+export const getBuildingFeatures = async (req, res) => {
+  try {
+    const { sessionId, sceneId, buildingId } = req.params;
+
+    const { getBuildingFeatures } = await import('../services/buildingInteractionService.js');
+    const features = await getBuildingFeatures(sessionId, sceneId, buildingId);
+
+    res.json({
+      success: true,
+      buildingId,
+      features
+    });
+  } catch (error) {
+    console.error('Error getting building features:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to get building features',
       message: error.message
     });
   }
 };
 
 /**
- * Broadcast event to specific session
+ * Get scene buildings
+ * GET /api/backend/game/session/:sessionId/scene/:sceneId/buildings
  */
-export const broadcastToSession = (sessionId, event) => {
-  const connection = activeConnections.get(sessionId);
-  if (connection) {
-    connection.write(`data: ${JSON.stringify(event)}\n\n`);
-  }
-};
-
-/**
- * Get active SSE connections count
- */
-export const getActiveConnections = (req, res) => {
-  res.json({
-    success: true,
-    activeConnections: activeConnections.size,
-    sessions: Array.from(activeConnections.keys())
-  });
-};
-
-/**
- * Helper function to chunk text for streaming
- * Improved to split by sentences and words for better streaming effect
- */
-function chunkText(text, chunkSize) {
-  const chunks = [];
-  
-  // First split by sentences (Chinese periods, English periods, exclamation marks, question marks)
-  const sentences = text.split(/([。！？.!?])/);
-  
-  let currentChunk = '';
-  
-  for (let i = 0; i < sentences.length; i++) {
-    const sentence = sentences[i];
-    
-    // If adding this sentence would exceed chunk size, push current chunk and start new one
-    if (currentChunk.length + sentence.length > chunkSize && currentChunk.length > 0) {
-      chunks.push(currentChunk);
-      currentChunk = sentence;
-    } else {
-      currentChunk += sentence;
-    }
-  }
-  
-  // Add the last chunk if it's not empty
-  if (currentChunk.length > 0) {
-    chunks.push(currentChunk);
-  }
-  
-  // If no chunks were created (text is very short), create one chunk
-  if (chunks.length === 0) {
-    chunks.push(text);
-  }
-  
-  return chunks;
-}
-
-/**
- * Send action with true streaming from Claude API
- */
-export const sendActionWithTrueStreaming = async (req, res) => {
-  const { sessionId } = req.params;
-  const { action } = req.body;
-
-  if (!action) {
-    return res.status(400).json({ error: 'action is required' });
-  }
-
-  const connection = activeConnections.get(sessionId);
-
-  if (!connection) {
-    return res.status(400).json({
-      error: 'No active SSE connection for this session. Please connect to /api/game/stream/:sessionId first.'
-    });
-  }
-
+export const getSceneBuildings = async (req, res) => {
   try {
-    // Send action received event
-    connection.write(`data: ${JSON.stringify({
-      type: 'action_received',
-      action,
-      timestamp: new Date().toISOString()
-    })}\n\n`);
+    const { sessionId, sceneId } = req.params;
 
-    // Send processing event
-    connection.write(`data: ${JSON.stringify({
-      type: 'processing',
-      message: 'Processing your action...',
-      timestamp: new Date().toISOString()
-    })}\n\n`);
+    const { getSceneBuildings } = await import('../services/buildingInteractionService.js');
+    const buildings = await getSceneBuildings(sessionId, sceneId);
 
-    // Process the action with true real-time streaming
-    const result = await processActionWithRealTimeStreaming(sessionId, action, connection);
-
-    // Export game data
-    const session = getSession(sessionId);
-    if (session) {
-      exportAllGameData(sessionId, session);
-      exportLatestAction(sessionId, {
-        action,
-        response: result.response,
-        gameState: result.gameState,
-        characterStatus: result.characterStatus,
-        actionOptions: result.actionOptions
-      });
-    }
-
-    // Send acknowledgment to the action sender
     res.json({
       success: true,
-      message: 'Action processed and streamed to SSE connection'
+      sceneId,
+      buildings
     });
-
   } catch (error) {
-    console.error('SSE action error:', error);
-
-    // Send error event to SSE connection
-    if (connection) {
-      connection.write(`data: ${JSON.stringify({
-        type: 'error',
-        error: error.message,
-        timestamp: new Date().toISOString()
-      })}\n\n`);
-    }
-
+    console.error('Error getting scene buildings:', error);
     res.status(500).json({
       success: false,
-      error: error.message
+      error: 'Failed to get scene buildings',
+      message: error.message
     });
   }
 };
 
 /**
- * Process action with real-time streaming from Claude API
+ * Helper function to detect state changes between before and after player data
  */
-async function processActionWithRealTimeStreaming(sessionId, action, connection) {
-  try {
-    const { getSession, updateGameState } = await import('../services/gameService.js');
-    const { loadStatus, getStatusUpdatePrompt, applyClaudeUpdates, extractActionOptions } = await import('../services/statusService.js');
-    const { prepareGameSettingsForLLM } = await import('../services/gameSettingsService.js');
-    const { Anthropic } = await import('@anthropic-ai/sdk');
-    const dotenv = await import('dotenv');
-    
-    // Load environment variables
-    dotenv.config();
-    
-    // Initialize Claude client
-    const anthropic = new Anthropic({
-      apiKey: process.env.CLAUDE_API_KEY,
-      baseURL: process.env.CLAUDE_BASE_URL,
-    });
+function detectStateChanges(before, after) {
+  const changes = {
+    inventory: [],
+    attributes: {},
+    relationships: {}
+  };
 
-    const session = getSession(sessionId);
-    if (!session) {
-      throw new Error('Session not found');
-    }
-
-    const status = loadStatus(sessionId);
-    const statusPrompt = getStatusUpdatePrompt(status);
-    
-    const systemPrompt = `你是一个专业的互动小说游戏主持人（Game Master）。你将基于以下PDF文档中的设定来主持一个互动小说游戏。
-
-游戏设定内容：
-${prepareGameSettingsForLLM(session.gameSettings)}
-
-${statusPrompt}
-
-你的职责：
-1. 严格遵循PDF中提供的所有设定、规则和框架
-2. 根据PDF要求生成相应的可视化板块和模块（如人物面板、时间、地点、热搜等）
-3. 用生动、细腻的文笔描述剧情，营造沉浸式体验
-4. 根据玩家的选择和行动推进剧情发展
-5. 支持中英文双语交互
-6. 保持剧情连贯性和逻辑性
-7. 当游戏事件影响角色状态时，在回复中包含状态更新标记
-
-**重要：行动选项格式规范**
-在每次回复的结尾，你必须提供玩家可以选择的行动选项。
-使用以下特殊格式来标记行动选项（每个选项独占一行）：
-
-[ACTION: 选项描述文本]
-
-示例：
-[ACTION: 探索神秘的森林深处]
-[ACTION: 与NPC对话获取信息]
-[ACTION: 在旅馆休息恢复体力]
-
-注意：
-- 每个行动选项必须使用 [ACTION: ...] 格式
-- 每个选项独占一行
-- 通常提供3-5个选项
-- 选项要具体、可操作
-- 不要在其他地方使用这个格式
-
-请用中文回复，语言要生动有趣。`;
-
-    // Build conversation history for Claude (same as original implementation)
-    const messages = [...session.conversationHistory];
-    
-    // Add current action
-    messages.push({
-      role: 'user',
-      content: action
-    });
-
-    // 使用流式模式
-    const stream = await anthropic.messages.create({
-      model: 'deepseek-chat',
-      max_tokens: 10000,
-      system: systemPrompt,
-      messages: messages,
-      stream: true  // 启用流式模式
-    });
-
-    let fullResponse = '';
-    let chunkIndex = 0;
-    
-    // 实时处理流式响应
-    for await (const chunk of stream) {
-      if (chunk.type === 'content_block_delta') {
-        const token = chunk.delta.text;
-        fullResponse += token;
-        
-        // 立即发送每个token到前端
-        connection.write(`data: ${JSON.stringify({
-          type: 'response_chunk',
-          chunk: token,
-          index: chunkIndex,
-          total: -1, // -1 表示未知总数，正在流式生成
-          timestamp: new Date().toISOString()
-        })}\n\n`);
-        
-        chunkIndex++;
-        
-        // 添加小延迟以控制流式速度
-        await new Promise(resolve => setTimeout(resolve, 50));
-      }
-    }
-
-    // 发送流式结束标记
-    connection.write(`data: ${JSON.stringify({
-      type: 'response_chunk',
-      chunk: '',
-      index: chunkIndex,
-      total: chunkIndex,
-      timestamp: new Date().toISOString(),
-      isComplete: true
-    })}\n\n`);
-
-    // 解析完整响应
-    const response = {
-      message: fullResponse
-    };
-    
-    // Update game state based on action
-    updateGameState(session, action, response);
-    
-    // Parse and apply status updates from Claude's response
-    const updatedStatus = await applyClaudeUpdates(sessionId, response.message);
-    session.characterStatus = updatedStatus;
-
-    // Extract action options for the frontend to render as buttons
-    const actionOptions = extractActionOptions(response.message);
-
-    // Update conversation history (same as original implementation)
-    session.conversationHistory.push({
-      role: 'user',
-      content: action
-    });
-    session.conversationHistory.push({
-      role: 'assistant',
-      content: response.message
-    });
-
-    // Send game state update
-    connection.write(`data: ${JSON.stringify({
-      type: 'state_update',
-      gameState: session.gameState,
-      characterStatus: updatedStatus,
-      timestamp: new Date().toISOString()
-    })}\n\n`);
-
-    // Send action options
-    if (actionOptions && actionOptions.length > 0) {
-      connection.write(`data: ${JSON.stringify({
-        type: 'action_options',
-        options: actionOptions,
-        timestamp: new Date().toISOString()
-      })}\n\n`);
-    }
-
-    // Send completion event
-    connection.write(`data: ${JSON.stringify({
-      type: 'complete',
-      timestamp: new Date().toISOString()
-    })}\n\n`);
-    
-    return {
-      response: response.message,
-      gameState: session.gameState,
-      characterStatus: updatedStatus,
-      actionOptions
-    };
-    
-  } catch (error) {
-    console.error('Real-time streaming error:', error);
-    
-    // Send error event to SSE connection
-    connection.write(`data: ${JSON.stringify({
-      type: 'error',
-      error: error.message,
-      timestamp: new Date().toISOString()
-    })}\n\n`);
-    
-    throw error;
+  // Safety check: return empty changes if data is invalid
+  if (!before || !after) {
+    console.warn('detectStateChanges: before or after data is null/undefined');
+    return changes;
   }
-}
 
+  // Detect inventory changes
+  const beforeInv = before.inventory?.items || [];
+  const afterInv = after.inventory?.items || [];
+
+  // Find added items
+  afterInv.forEach(item => {
+    const existedBefore = beforeInv.find(i => i.id === item.id);
+    if (!existedBefore) {
+      changes.inventory.push({ ...item, added: true });
+    }
+  });
+
+  // Find removed items
+  beforeInv.forEach(item => {
+    const existsAfter = afterInv.find(i => i.id === item.id);
+    if (!existsAfter) {
+      changes.inventory.push({ ...item, removed: true });
+    }
+  });
+
+  // Detect attribute changes (handle both 'attributes' and 'characterAttributes' fields)
+  const beforeAttr = before.attributes || before.characterAttributes || {};
+  const afterAttr = after.attributes || after.characterAttributes || {};
+
+  for (const key in afterAttr) {
+    const beforeVal = beforeAttr[key] || 0;
+    const afterVal = afterAttr[key] || 0;
+    if (beforeVal !== afterVal) {
+      changes.attributes[key] = afterVal - beforeVal;
+    }
+  }
+
+  // Detect relationship changes
+  const beforeRel = before.relationships || {};
+  const afterRel = after.relationships || {};
+
+  for (const key in afterRel) {
+    const beforeVal = beforeRel[key] || 0;
+    const afterVal = afterRel[key] || 0;
+    if (beforeVal !== afterVal) {
+      changes.relationships[key] = afterVal - beforeVal;
+    }
+  }
+
+  return changes;
+}
